@@ -142,29 +142,15 @@ searchButton.TextColor3 = Color3.fromRGB(66, 133, 244)
 searchButton.Parent = searchContainer
 
 -- ========== VISTA DE RESULTADOS ==========
-local resultsFrame = Instance.new("ScrollingFrame")
+local resultsFrame = Instance.new("Frame")
 resultsFrame.Name = "ResultsFrame"
 resultsFrame.Size = UDim2.new(1, 0, 1, 0)
 resultsFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 resultsFrame.BorderSizePixel = 0
-resultsFrame.ScrollBarThickness = 8
-resultsFrame.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
 resultsFrame.Visible = false
 resultsFrame.Parent = mainFrame
 
-local resultsLayout = Instance.new("UIListLayout")
-resultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-resultsLayout.Padding = UDim.new(0, 15)
-resultsLayout.Parent = resultsFrame
-
-local resultsPadding = Instance.new("UIPadding")
-resultsPadding.PaddingLeft = UDim.new(0, 100)
-resultsPadding.PaddingRight = UDim.new(0, 100)
-resultsPadding.PaddingTop = UDim.new(0, 90)
-resultsPadding.PaddingBottom = UDim.new(0, 30)
-resultsPadding.Parent = resultsFrame
-
--- Header de resultados
+-- Header de resultados (fijo en la parte superior)
 local resultsHeader = Instance.new("Frame")
 resultsHeader.Size = UDim2.new(1, 0, 0, 80)
 resultsHeader.Position = UDim2.new(0, 0, 0, 0)
@@ -189,6 +175,29 @@ searchContainerHeader.Size = UDim2.new(0, 500, 0, 40)
 searchContainerHeader.Position = UDim2.new(0, 150, 0.5, -20)
 searchContainerHeader.Parent = resultsHeader
 
+-- Lista de resultados (scrolleable, debajo del header)
+local resultsScrollFrame = Instance.new("ScrollingFrame")
+resultsScrollFrame.Name = "ResultsScrollFrame"
+resultsScrollFrame.Size = UDim2.new(1, 0, 1, -80)
+resultsScrollFrame.Position = UDim2.new(0, 0, 0, 80)
+resultsScrollFrame.BackgroundTransparency = 1
+resultsScrollFrame.BorderSizePixel = 0
+resultsScrollFrame.ScrollBarThickness = 8
+resultsScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+resultsScrollFrame.Parent = resultsFrame
+
+local resultsLayout = Instance.new("UIListLayout")
+resultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+resultsLayout.Padding = UDim.new(0, 0)
+resultsLayout.Parent = resultsScrollFrame
+
+local resultsPadding = Instance.new("UIPadding")
+resultsPadding.PaddingLeft = UDim.new(0, 30)
+resultsPadding.PaddingRight = UDim.new(0, 30)
+resultsPadding.PaddingTop = UDim.new(0, 20)
+resultsPadding.PaddingBottom = UDim.new(0, 30)
+resultsPadding.Parent = resultsScrollFrame
+
 -- ========== VISTA DE ARTÍCULO COMPLETO ==========
 local articleViewFrame = Instance.new("ScrollingFrame")
 articleViewFrame.Name = "ArticleViewFrame"
@@ -206,10 +215,10 @@ articleLayout.Padding = UDim.new(0, 20)
 articleLayout.Parent = articleViewFrame
 
 local articlePadding = Instance.new("UIPadding")
-articlePadding.PaddingLeft = UDim.new(0, 150)
-articlePadding.PaddingRight = UDim.new(0, 150)
-articlePadding.PaddingTop = UDim.new(0, 40)
-articlePadding.PaddingBottom = UDim.new(0, 40)
+articlePadding.PaddingLeft = UDim.new(0, 25)
+articlePadding.PaddingRight = UDim.new(0, 25)
+articlePadding.PaddingTop = UDim.new(0, 30)
+articlePadding.PaddingBottom = UDim.new(0, 30)
 articlePadding.Parent = articleViewFrame
 
 -- Botón volver
@@ -609,8 +618,13 @@ local function showArticle(articleId)
 end
 
 function loadArticles(query)
-    for _, child in ipairs(resultsFrame:GetChildren()) do
-        if child:IsA("Frame") and child.Name == "ArticleFrame" then
+    local resultsScrollFrame = resultsFrame:FindFirstChild("ResultsScrollFrame")
+    
+    for _, child in ipairs(resultsScrollFrame:GetChildren()) do
+        if child:IsA("Frame") and (child.Name == "ArticleFrame" or child.Name == "NoResultsFrame") then
+            child:Destroy()
+        end
+        if child:IsA("TextLabel") then
             child:Destroy()
         end
     end
@@ -625,28 +639,34 @@ function loadArticles(query)
     local articles = getArticlesEvent:InvokeServer(query)
 
     if #articles == 0 then
+        local noResultsFrame = Instance.new("Frame")
+        noResultsFrame.Name = "NoResultsFrame"
+        noResultsFrame.Size = UDim2.new(1, 0, 0, 100)
+        noResultsFrame.BackgroundTransparency = 1
+        noResultsFrame.LayoutOrder = 100
+        noResultsFrame.Parent = resultsScrollFrame
+        
         local noResults = Instance.new("TextLabel")
-        noResults.Size = UDim2.new(1, 0, 0, 100)
+        noResults.Size = UDim2.new(1, 0, 1, 0)
         noResults.BackgroundTransparency = 1
         noResults.Text = 'No se encontraron resultados para: "' .. query .. '"'
         noResults.Font = Enum.Font.Gotham
         noResults.TextSize = 20
         noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-        noResults.LayoutOrder = 100
-        noResults.Parent = resultsFrame
+        noResults.Parent = noResultsFrame
     else
         for i, article in ipairs(articles) do
             local articleFrame = Instance.new("Frame")
             articleFrame.Name = "ArticleFrame"
-            articleFrame.Size = UDim2.new(1, 0, 0, 140)
+            articleFrame.Size = UDim2.new(1, 0, 0, 150)
             articleFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             articleFrame.BorderSizePixel = 0
-            articleFrame.LayoutOrder = i + 1
-            articleFrame.Parent = resultsFrame
+            articleFrame.LayoutOrder = (i * 2) - 1
+            articleFrame.Parent = resultsScrollFrame
 
             local authorThumb = Instance.new("ImageLabel")
             authorThumb.Size = UDim2.new(0, 60, 0, 60)
-            authorThumb.Position = UDim2.new(0, 0, 0, 10)
+            authorThumb.Position = UDim2.new(0, 10, 0, 15)
             authorThumb.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
             authorThumb.Image = article.authorThumbnail
             authorThumb.Parent = articleFrame
@@ -656,24 +676,24 @@ function loadArticles(query)
             thumbCorner.Parent = authorThumb
 
             local articleTitle = Instance.new("TextButton")
-            articleTitle.Size = UDim2.new(1, -80, 0, 30)
-            articleTitle.Position = UDim2.new(0, 75, 0, 5)
+            articleTitle.Size = UDim2.new(1, -90, 0, 30)
+            articleTitle.Position = UDim2.new(0, 85, 0, 10)
             articleTitle.BackgroundTransparency = 1
             articleTitle.Text = article.title
             articleTitle.Font = Enum.Font.GothamBold
-            articleTitle.TextSize = 22
+            articleTitle.TextSize = 20
             articleTitle.TextColor3 = Color3.fromRGB(26, 13, 171)
             articleTitle.TextXAlignment = Enum.TextXAlignment.Left
             articleTitle.TextTruncate = Enum.TextTruncate.AtEnd
             articleTitle.Parent = articleFrame
 
             local articleDesc = Instance.new("TextLabel")
-            articleDesc.Size = UDim2.new(1, -80, 0, 60)
-            articleDesc.Position = UDim2.new(0, 75, 0, 40)
+            articleDesc.Size = UDim2.new(1, -90, 0, 55)
+            articleDesc.Position = UDim2.new(0, 85, 0, 45)
             articleDesc.BackgroundTransparency = 1
             articleDesc.Text = article.description
             articleDesc.Font = Enum.Font.Gotham
-            articleDesc.TextSize = 16
+            articleDesc.TextSize = 15
             articleDesc.TextColor3 = Color3.fromRGB(60, 60, 60)
             articleDesc.TextXAlignment = Enum.TextXAlignment.Left
             articleDesc.TextYAlignment = Enum.TextYAlignment.Top
@@ -681,12 +701,12 @@ function loadArticles(query)
             articleDesc.Parent = articleFrame
 
             local articleAuthor = Instance.new("TextLabel")
-            articleAuthor.Size = UDim2.new(1, -80, 0, 20)
-            articleAuthor.Position = UDim2.new(0, 75, 1, -25)
+            articleAuthor.Size = UDim2.new(1, -90, 0, 20)
+            articleAuthor.Position = UDim2.new(0, 85, 1, -30)
             articleAuthor.BackgroundTransparency = 1
             articleAuthor.Text = "Por " .. article.author .. " • " .. article.dateCreated
             articleAuthor.Font = Enum.Font.Gotham
-            articleAuthor.TextSize = 14
+            articleAuthor.TextSize = 13
             articleAuthor.TextColor3 = Color3.fromRGB(120, 120, 120)
             articleAuthor.TextXAlignment = Enum.TextXAlignment.Left
             articleAuthor.Parent = articleFrame
@@ -694,10 +714,22 @@ function loadArticles(query)
             articleTitle.MouseButton1Click:Connect(function()
                 showArticle(article.id)
             end)
+            
+            -- LÍNEA SEPARADORA entre artículos (excepto el último)
+            if i < #articles then
+                local divider = Instance.new("Frame")
+                divider.Name = "Divider"
+                divider.Size = UDim2.new(1, -20, 0, 1)
+                divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+                divider.BorderSizePixel = 0
+                divider.LayoutOrder = i * 2
+                divider.Parent = resultsScrollFrame
+            end
         end
     end
 
-    resultsFrame.CanvasSize = UDim2.new(0, 0, 0, resultsLayout.AbsoluteContentSize.Y + 60)
+    task.wait(0.1)
+    resultsScrollFrame.CanvasSize = UDim2.new(0, 0, 0, resultsLayout.AbsoluteContentSize.Y + 40)
 end
 
 local function runSearch(inputBox)
