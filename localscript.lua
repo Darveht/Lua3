@@ -5,6 +5,30 @@ local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterGui = game:GetService("StarterGui")
+
+-- OCULTAR MUNDO 3D Y UI DE ROBLOX
+StarterGui:SetCoreGuiEnabled(Enum.CoreGuiType.All, false)
+player.CameraMode = Enum.CameraMode.LockFirstPerson
+player.CameraMaxZoomDistance = 0.5
+player.CameraMinZoomDistance = 0.5
+
+-- Ocultar el jugador
+if player.Character then
+    for _, part in ipairs(player.Character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 1
+        end
+    end
+end
+
+player.CharacterAdded:Connect(function(character)
+    for _, part in ipairs(character:GetDescendants()) do
+        if part:IsA("BasePart") then
+            part.Transparency = 1
+        end
+    end
+end)
 
 -- Esperar a que los remotes estén listos
 local remoteFolder = ReplicatedStorage:WaitForChild("RoogleRemotes")
