@@ -5,16 +5,8 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 
--- BASE DE DATOS EN MEMORIA (simulando Firestore)
--- En producción, esto debería conectarse a una base de datos real
+-- BASE DE DATOS EN MEMORIA
 local articlesDatabase = {}
-
--- CONFIGURACIÓN REMOTA
-local remoteFolder = ReplicatedStorage:WaitForChild("RoogleRemotes")
-local getArticlesEvent = remoteFolder:WaitForChild("GetArticles")
-local publishArticleFunction = remoteFolder:WaitForChild("PublishArticle")
-local checkAdminEvent = remoteFolder:WaitForChild("CheckAdmin")
-local getArticleByIdEvent = remoteFolder:WaitForChild("GetArticleById")
 
 -- Función para generar ID único
 local function generateId()
@@ -29,19 +21,43 @@ local function getPlayerThumbnail(userId)
     return content
 end
 
--- PUBLICAR ARTÍCULO (con guardado en tiempo real)
-local function handlePublishArticle(player, title, description)
+-- CREAR REMOTES SI NO EXISTEN (automático)
+local remoteFolder = ReplicatedStorage:FindFirstChild("RoogleRemotes")
+if not remoteFolder then
+    remoteFolder = Instance.new("Folder")
+    remoteFolder.Name = "RoogleRemotes"
+    remoteFolder.Parent = ReplicatedStorage
+end
+
+local function createRemote(name, className)
+    local remote = remoteFolder:FindFirstChild(name)
+    if not remote then
+        remote = Instance.new(className)
+        remote.Name = name
+        remote.Parent = remoteFolder
+    end
+    return remote
+end
+
+-- Crear todos los remotes automáticamente
+local getArticlesEvent = createRemote("GetArticles", "RemoteFunction")
+local publishArticleFunction = createRemote("PublishArticle", "RemoteFunction")
+local checkAdminEvent = createRemote("CheckAdmin", "RemoteFunction")
+local getArticleByIdEvent = createRemote("GetArticleById", "RemoteFunction")
+
+-- FUNCIONES DEL SERVIDOR
+
+-- PUBLICAR ARTÍCULO
+publishArticleFunction.OnServerInvoke = function(player, title, description)
     print(string.format("[%s] Publicando artículo: %s", player.Name, title))
     
-    -- Simular latencia de red (puedes ajustar o eliminar)
     task.wait(0.5)
     
-    -- Crear nuevo artículo
     local newArticle = {
         id = generateId(),
         title = title,
         description = description,
-        content = description, -- El contenido completo es la descripción
+        content = description,
         author = player.Name,
         authorId = player.UserId,
         authorThumbnail = getPlayerThumbnail(player.UserId),
@@ -49,26 +65,21 @@ local function handlePublishArticle(player, title, description)
         dateCreated = os.date("%d/%m/%Y %H:%M")
     }
     
-    -- Guardar en la "base de datos"
-    table.insert(articlesDatabase, 1, newArticle) -- Insertar al inicio para que aparezca primero
+    table.insert(articlesDatabase, 1, newArticle)
     
-    print(string.format("[SERVER] Artículo '%s' guardado exitosamente. Total artículos: %d", title, #articlesDatabase))
+    print(string.format("[SERVER] Artículo '%s' guardado. Total: %d", title, #articlesDatabase))
     
-    -- Retornar éxito al cliente
     return true
 end
 
--- OBTENER ARTÍCULOS (con búsqueda)
-local function handleGetArticles(player, query)
+-- OBTENER ARTÍCULOS
+getArticlesEvent.OnServerInvoke = function(player, query)
     print(string.format("[%s] Buscando: '%s'", player.Name, query or ""))
     
-    -- Si no hay búsqueda, retornar todos los artículos
     if not query or query == "" then
-        print(string.format("[SERVER] Retornando %d artículos", #articlesDatabase))
         return articlesDatabase
     end
     
-    -- Buscar artículos que coincidan con la consulta
     local results = {}
     local queryLower = string.lower(query)
     
@@ -81,37 +92,26 @@ local function handleGetArticles(player, query)
         end
     end
     
-    print(string.format("[SERVER] Encontrados %d resultados para '%s'", #results, query))
+    print(string.format("[SERVER] Encontrados %d resultados", #results))
     return results
 end
 
--- OBTENER ARTÍCULO POR ID (para vista completa)
-local function handleGetArticleById(player, articleId)
-    print(string.format("[%s] Obteniendo artículo ID: %s", player.Name, articleId))
-    
+-- OBTENER ARTÍCULO POR ID
+getArticleByIdEvent.OnServerInvoke = function(player, articleId)
     for _, article in ipairs(articlesDatabase) do
         if article.id == articleId then
             return article
         end
     end
-    
     return nil
 end
 
--- VERIFICAR ADMIN
-local function handleCheckAdmin(player)
-    -- Por ahora todos son admin para pruebas
-    -- En producción, verificar con una lista de IDs o grupos
+-- VERIFICAR ADMIN (todos son admin en esta versión)
+checkAdminEvent.OnServerInvoke = function(player)
     return true
 end
 
--- CONECTAR EVENTOS
-publishArticleFunction.OnServerInvoke = handlePublishArticle
-getArticlesEvent.OnServerInvoke = handleGetArticles
-checkAdminEvent.OnServerInvoke = handleCheckAdmin
-getArticleByIdEvent.OnServerInvoke = handleGetArticleById
-
--- Crear algunos artículos de ejemplo al iniciar
+-- ARTÍCULOS DE EJEMPLO
 table.insert(articlesDatabase, {
     id = generateId(),
     title = "Bienvenido a Roogle",
@@ -136,6 +136,7 @@ table.insert(articlesDatabase, {
     dateCreated = os.date("%d/%m/%Y %H:%M")
 })
 
-print("=== Roogle Server Iniciado ===")
-print("Artículos en base de datos:", #articlesDatabase)
-print("Sistema de publicación en tiempo real activo")
+print("=== ✓ Roogle Server Iniciado ===")
+print("✓ Artículos en base de datos:", #articlesDatabase)
+print("✓ RemoteEvents creados automáticamente")
+print("✓ Sistema listo para usar")

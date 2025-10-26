@@ -14,40 +14,49 @@ player.CameraMaxZoomDistance = 0.5
 player.CameraMinZoomDistance = 0.5
 
 -- Ocultar el jugador
-if player.Character then
-    for _, part in ipairs(player.Character:GetDescendants()) do
+local function hideCharacter(character)
+    for _, part in ipairs(character:GetDescendants()) do
         if part:IsA("BasePart") then
             part.Transparency = 1
         end
     end
 end
 
-player.CharacterAdded:Connect(function(character)
-    for _, part in ipairs(character:GetDescendants()) do
-        if part:IsA("BasePart") then
-            part.Transparency = 1
-        end
-    end
-end)
+if player.Character then
+    hideCharacter(player.Character)
+end
 
--- Esperar a que los remotes estén listos
-local remoteFolder = ReplicatedStorage:WaitForChild("RoogleRemotes")
-local getArticlesEvent = remoteFolder:WaitForChild("GetArticles")
-local publishArticleFunction = remoteFolder:WaitForChild("PublishArticle")
-local checkAdminEvent = remoteFolder:WaitForChild("CheckAdmin")
-local getArticleByIdEvent = remoteFolder:WaitForChild("GetArticleById")
+player.CharacterAdded:Connect(hideCharacter)
+
+-- ESPERAR REMOTES (con timeout de seguridad)
+local remoteFolder = ReplicatedStorage:WaitForChild("RoogleRemotes", 10)
+
+if not remoteFolder then
+    warn("❌ ERROR: No se encontró la carpeta RoogleRemotes. Asegúrate de que Server.lua esté en ServerScriptService.")
+    return
+end
+
+local getArticlesEvent = remoteFolder:WaitForChild("GetArticles", 5)
+local publishArticleFunction = remoteFolder:WaitForChild("PublishArticle", 5)
+local checkAdminEvent = remoteFolder:WaitForChild("CheckAdmin", 5)
+local getArticleByIdEvent = remoteFolder:WaitForChild("GetArticleById", 5)
+
+if not (getArticlesEvent and publishArticleFunction and checkAdminEvent and getArticleByIdEvent) then
+    warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents")
+    return
+end
 
 -- Verificar si es admin
 local isAdmin = checkAdminEvent:InvokeServer()
 
--- Crear GUI
+-- CREAR GUI
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "RoogleGui"
 screenGui.ResetOnSpawn = false
 screenGui.IgnoreGuiInset = true
 screenGui.Parent = playerGui
 
--- Contenedor principal de la GUI
+-- Contenedor principal
 local mainFrame = Instance.new("Frame")
 mainFrame.Size = UDim2.new(1, 0, 1, 0)
 mainFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -80,7 +89,7 @@ logo.TextColor3 = Color3.fromRGB(66, 133, 244)
 logo.LayoutOrder = 1
 logo.Parent = centerContainer
 
--- Barra de búsqueda
+-- Barra de búsqueda principal
 local searchContainer = Instance.new("Frame")
 searchContainer.Name = "SearchContainer"
 searchContainer.Size = UDim2.new(1, 0, 0, 50)
@@ -108,7 +117,6 @@ searchIcon.Size = UDim2.new(0, 40, 1, 0)
 searchIcon.BackgroundTransparency = 1
 searchIcon.Text = "🔍"
 searchIcon.TextSize = 24
-searchIcon.TextColor3 = Color3.fromRGB(150, 150, 150)
 searchIcon.Parent = searchContainer
 
 local searchBox = Instance.new("TextBox")
@@ -165,10 +173,14 @@ resultsHeader.BorderSizePixel = 0
 resultsHeader.ZIndex = 2
 resultsHeader.Parent = resultsFrame
 
-local logoHeader = logo:Clone()
+local logoHeader = Instance.new("TextLabel")
 logoHeader.Size = UDim2.new(0, 100, 1, 0)
-logoHeader.TextSize = 30
 logoHeader.Position = UDim2.new(0, 30, 0, 0)
+logoHeader.BackgroundTransparency = 1
+logoHeader.Text = "Roogle"
+logoHeader.Font = Enum.Font.GothamBold
+logoHeader.TextSize = 30
+logoHeader.TextColor3 = Color3.fromRGB(66, 133, 244)
 logoHeader.TextXAlignment = Enum.TextXAlignment.Left
 logoHeader.Parent = resultsHeader
 
@@ -202,6 +214,7 @@ articlePadding.Parent = articleViewFrame
 
 -- Botón volver
 local backButton = Instance.new("TextButton")
+backButton.Name = "BackButton"
 backButton.Size = UDim2.new(0, 100, 0, 40)
 backButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
 backButton.Text = "← Volver"
@@ -245,7 +258,7 @@ if isAdmin then
     adminButton.Position = UDim2.new(1, -15, 0, 15)
     adminButton.AnchorPoint = Vector2.new(1, 0)
     adminButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
-    adminButton.Text = "Publicar"
+    adminButton.Text = "✏ Publicar"
     adminButton.Font = Enum.Font.GothamBold
     adminButton.TextSize = 16
     adminButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -257,65 +270,48 @@ if isAdmin then
     adminCorner.CornerRadius = UDim.new(0, 8)
     adminCorner.Parent = adminButton
 
-    -- PANEL DE PUBLICACIÓN (A pantalla completa)
-    local publishPanel = Instance.new("ScrollingFrame")
+    -- PANEL DE PUBLICACIÓN
+    local publishPanel = Instance.new("Frame")
     publishPanel.Name = "PublishPanel"
     publishPanel.Size = UDim2.new(1, 0, 1, 0)
-    publishPanel.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+    publishPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    publishPanel.BackgroundTransparency = 0.5
     publishPanel.BorderSizePixel = 0
-    publishPanel.ScrollBarThickness = 8
     publishPanel.Visible = false
     publishPanel.ZIndex = 10
     publishPanel.Parent = mainFrame
 
     -- Contenedor del formulario
     local formContainer = Instance.new("Frame")
-    formContainer.Size = UDim2.new(0, 700, 0, 650)
+    formContainer.Size = UDim2.new(0, 700, 0, 600)
     formContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
     formContainer.AnchorPoint = Vector2.new(0.5, 0.5)
     formContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     formContainer.BorderSizePixel = 0
+    formContainer.ZIndex = 11
     formContainer.Parent = publishPanel
 
     local formCorner = Instance.new("UICorner")
     formCorner.CornerRadius = UDim.new(0, 12)
     formCorner.Parent = formContainer
 
-    local formStroke = Instance.new("UIStroke")
-    formStroke.Color = Color3.fromRGB(200, 200, 200)
-    formStroke.Thickness = 2
-    formStroke.Parent = formContainer
-
-    -- Layout vertical
-    local pubListLayout = Instance.new("UIListLayout")
-    pubListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    pubListLayout.Padding = UDim.new(0, 15)
-    pubListLayout.Parent = formContainer
-
-    local pubPadding = Instance.new("UIPadding")
-    pubPadding.PaddingTop = UDim.new(0, 70)
-    pubPadding.PaddingBottom = UDim.new(0, 30)
-    pubPadding.PaddingLeft = UDim.new(0, 30)
-    pubPadding.PaddingRight = UDim.new(0, 30)
-    pubPadding.Parent = formContainer
-
     -- Título del panel
     local publishTitle = Instance.new("TextLabel")
     publishTitle.Size = UDim2.new(1, -100, 0, 40)
-    publishTitle.Position = UDim2.new(0, 30, 0, 15)
+    publishTitle.Position = UDim2.new(0, 30, 0, 20)
     publishTitle.BackgroundTransparency = 1
-    publishTitle.Text = "PUBLICAR NUEVO ARTÍCULO"
+    publishTitle.Text = "✏ PUBLICAR NUEVO ARTÍCULO"
     publishTitle.Font = Enum.Font.GothamBold
     publishTitle.TextSize = 24
     publishTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
     publishTitle.TextXAlignment = Enum.TextXAlignment.Left
-    publishTitle.ZIndex = 11
+    publishTitle.ZIndex = 12
     publishTitle.Parent = formContainer
 
     -- Botón cerrar
     local closeButton = Instance.new("TextButton")
     closeButton.Size = UDim2.new(0, 35, 0, 35)
-    closeButton.Position = UDim2.new(1, -15, 0, 15)
+    closeButton.Position = UDim2.new(1, -20, 0, 20)
     closeButton.AnchorPoint = Vector2.new(1, 0)
     closeButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
     closeButton.Text = "✕"
@@ -323,29 +319,31 @@ if isAdmin then
     closeButton.TextSize = 20
     closeButton.TextColor3 = Color3.fromRGB(100, 100, 100)
     closeButton.BorderSizePixel = 0
-    closeButton.ZIndex = 11
+    closeButton.ZIndex = 12
     closeButton.Parent = formContainer
 
     local closeCorner = Instance.new("UICorner")
     closeCorner.CornerRadius = UDim.new(1, 0)
     closeCorner.Parent = closeButton
 
-    -- CAMPO TÍTULO - Etiqueta
+    -- Etiqueta Título
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, 0, 0, 25)
+    titleLabel.Size = UDim2.new(1, -60, 0, 25)
+    titleLabel.Position = UDim2.new(0, 30, 0, 80)
     titleLabel.BackgroundTransparency = 1
-    titleLabel.Text = "Título del artículo"
+    titleLabel.Text = "📝 Título del artículo"
     titleLabel.Font = Enum.Font.GothamBold
     titleLabel.TextSize = 16
     titleLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.LayoutOrder = 1
+    titleLabel.ZIndex = 12
     titleLabel.Parent = formContainer
 
-    -- CAMPO TÍTULO - Input
+    -- Campo Título
     local titleInput = Instance.new("TextBox")
     titleInput.Name = "TitleInput"
-    titleInput.Size = UDim2.new(1, 0, 0, 45)
+    titleInput.Size = UDim2.new(1, -60, 0, 45)
+    titleInput.Position = UDim2.new(0, 30, 0, 110)
     titleInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     titleInput.Text = ""
     titleInput.PlaceholderText = "Escribe el título del artículo..."
@@ -355,7 +353,7 @@ if isAdmin then
     titleInput.TextXAlignment = Enum.TextXAlignment.Left
     titleInput.ClearTextOnFocus = false
     titleInput.BorderSizePixel = 0
-    titleInput.LayoutOrder = 2
+    titleInput.ZIndex = 12
     titleInput.Parent = formContainer
 
     local titleCorner = Instance.new("UICorner")
@@ -366,22 +364,24 @@ if isAdmin then
     titlePadding.PaddingLeft = UDim.new(0, 15)
     titlePadding.Parent = titleInput
 
-    -- CAMPO CONTENIDO - Etiqueta
+    -- Etiqueta Contenido
     local contentLabel = Instance.new("TextLabel")
-    contentLabel.Size = UDim2.new(1, 0, 0, 25)
+    contentLabel.Size = UDim2.new(1, -60, 0, 25)
+    contentLabel.Position = UDim2.new(0, 30, 0, 170)
     contentLabel.BackgroundTransparency = 1
-    contentLabel.Text = "Contenido del artículo"
+    contentLabel.Text = "📄 Contenido del artículo"
     contentLabel.Font = Enum.Font.GothamBold
     contentLabel.TextSize = 16
     contentLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
     contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-    contentLabel.LayoutOrder = 3
+    contentLabel.ZIndex = 12
     contentLabel.Parent = formContainer
 
-    -- CAMPO CONTENIDO - Input (grande y visible)
+    -- Campo Contenido
     local contentInput = Instance.new("TextBox")
     contentInput.Name = "ContentInput"
-    contentInput.Size = UDim2.new(1, 0, 0, 300)
+    contentInput.Size = UDim2.new(1, -60, 0, 280)
+    contentInput.Position = UDim2.new(0, 30, 0, 200)
     contentInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     contentInput.Text = ""
     contentInput.PlaceholderText = "Escribe el contenido completo del artículo..."
@@ -394,7 +394,7 @@ if isAdmin then
     contentInput.MultiLine = true
     contentInput.TextWrapped = true
     contentInput.BorderSizePixel = 0
-    contentInput.LayoutOrder = 4
+    contentInput.ZIndex = 12
     contentInput.Parent = formContainer
 
     local contentCorner = Instance.new("UICorner")
@@ -410,14 +410,15 @@ if isAdmin then
     -- Botón publicar
     local publishButton = Instance.new("TextButton")
     publishButton.Name = "PublishArticleButton"
-    publishButton.Size = UDim2.new(1, 0, 0, 50)
+    publishButton.Size = UDim2.new(1, -60, 0, 50)
+    publishButton.Position = UDim2.new(0, 30, 0, 500)
     publishButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
-    publishButton.Text = "Publicar Artículo"
+    publishButton.Text = "✓ Publicar Artículo"
     publishButton.Font = Enum.Font.GothamBold
     publishButton.TextSize = 18
     publishButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     publishButton.BorderSizePixel = 0
-    publishButton.LayoutOrder = 5
+    publishButton.ZIndex = 12
     publishButton.Parent = formContainer
 
     local pubCorner = Instance.new("UICorner")
@@ -440,41 +441,35 @@ if isAdmin then
         local content = contentInput.Text
 
         if title ~= "" and content ~= "" then
-            -- Mostrar animación de carga
             loadingPanel.Visible = true
             publishPanel.Visible = false
 
-            -- Publicar artículo
             local success, result = pcall(function()
                 return publishArticleFunction:InvokeServer(title, content)
             end)
 
-            -- Ocultar animación
             loadingPanel.Visible = false
 
             if success and result == true then
                 print("✓ Artículo publicado exitosamente")
-                -- Recargar artículos para mostrar el nuevo
                 loadArticles("")
             else
                 warn("✗ Error al publicar:", result)
             end
         else
-            warn("Por favor completa todos los campos")
+            warn("⚠ Por favor completa todos los campos")
         end
     end)
 end
 
 -- ========== FUNCIONES ==========
 
--- Cambiar vista de interfaz
 local function setInterfaceView(viewName)
     centerContainer.Visible = (viewName == "home")
     resultsFrame.Visible = (viewName == "results")
     articleViewFrame.Visible = (viewName == "article")
 end
 
--- Mostrar artículo completo
 local function showArticle(articleId)
     local article = getArticleByIdEvent:InvokeServer(articleId)
     
@@ -483,7 +478,6 @@ local function showArticle(articleId)
         return
     end
     
-    -- Limpiar contenido anterior
     for _, child in ipairs(articleViewFrame:GetChildren()) do
         if child:IsA("Frame") or child:IsA("TextLabel") then
             if child.Name ~= "BackButton" then
@@ -494,18 +488,20 @@ local function showArticle(articleId)
     
     -- Título del artículo
     local articleTitle = Instance.new("TextLabel")
-    articleTitle.Size = UDim2.new(1, 0, 0, 60)
+    articleTitle.Size = UDim2.new(1, 0, 0, 0)
     articleTitle.BackgroundTransparency = 1
     articleTitle.Text = article.title
     articleTitle.Font = Enum.Font.GothamBold
     articleTitle.TextSize = 36
     articleTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
     articleTitle.TextXAlignment = Enum.TextXAlignment.Left
+    articleTitle.TextYAlignment = Enum.TextYAlignment.Top
     articleTitle.TextWrapped = true
     articleTitle.LayoutOrder = 2
     articleTitle.Parent = articleViewFrame
+    articleTitle.Size = UDim2.new(1, 0, 0, articleTitle.TextBounds.Y + 10)
     
-    -- Información del autor (con foto circular)
+    -- Información del autor
     local authorContainer = Instance.new("Frame")
     authorContainer.Size = UDim2.new(1, 0, 0, 60)
     authorContainer.BackgroundTransparency = 1
@@ -518,7 +514,6 @@ local function showArticle(articleId)
     authorLayout.Padding = UDim.new(0, 15)
     authorLayout.Parent = authorContainer
     
-    -- Foto del autor
     local authorImage = Instance.new("ImageLabel")
     authorImage.Size = UDim2.new(0, 50, 0, 50)
     authorImage.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
@@ -529,9 +524,8 @@ local function showArticle(articleId)
     imageCorner.CornerRadius = UDim.new(1, 0)
     imageCorner.Parent = authorImage
     
-    -- Info del autor
     local authorInfo = Instance.new("Frame")
-    authorInfo.Size = UDim2.new(0, 200, 1, 0)
+    authorInfo.Size = UDim2.new(0, 300, 1, 0)
     authorInfo.BackgroundTransparency = 1
     authorInfo.Parent = authorContainer
     
@@ -562,7 +556,6 @@ local function showArticle(articleId)
     articleDate.LayoutOrder = 2
     articleDate.Parent = authorInfo
     
-    -- Línea divisora
     local divider = Instance.new("Frame")
     divider.Size = UDim2.new(1, 0, 0, 2)
     divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
@@ -570,7 +563,6 @@ local function showArticle(articleId)
     divider.LayoutOrder = 4
     divider.Parent = articleViewFrame
     
-    -- Contenido del artículo
     local articleContent = Instance.new("TextLabel")
     articleContent.Size = UDim2.new(1, 0, 0, 0)
     articleContent.BackgroundTransparency = 1
@@ -583,20 +575,15 @@ local function showArticle(articleId)
     articleContent.TextWrapped = true
     articleContent.LayoutOrder = 5
     articleContent.Parent = articleViewFrame
-    
-    -- Ajustar altura del contenido
     articleContent.Size = UDim2.new(1, 0, 0, articleContent.TextBounds.Y + 20)
     
-    -- Ajustar canvas size
     task.wait(0.1)
     articleViewFrame.CanvasSize = UDim2.new(0, 0, 0, articleLayout.AbsoluteContentSize.Y + 80)
     
     setInterfaceView("article")
 end
 
--- Cargar artículos
 function loadArticles(query)
-    -- Limpiar resultados anteriores
     for _, child in ipairs(resultsFrame:GetChildren()) do
         if child:IsA("Frame") and child.Name == "ArticleFrame" then
             child:Destroy()
@@ -607,7 +594,7 @@ function loadArticles(query)
         setInterfaceView("home")
     else
         setInterfaceView("results")
-        searchContainerHeader:WaitForChild("SearchBox").Text = query
+        searchContainerHeader:FindFirstChild("SearchBox").Text = query
     end
 
     local articles = getArticlesEvent:InvokeServer(query)
@@ -624,7 +611,6 @@ function loadArticles(query)
         noResults.Parent = resultsFrame
     else
         for i, article in ipairs(articles) do
-            -- Contenedor del artículo
             local articleFrame = Instance.new("Frame")
             articleFrame.Name = "ArticleFrame"
             articleFrame.Size = UDim2.new(1, 0, 0, 140)
@@ -633,13 +619,6 @@ function loadArticles(query)
             articleFrame.LayoutOrder = i + 1
             articleFrame.Parent = resultsFrame
 
-            -- Layout horizontal para foto + info
-            local articleLayout = Instance.new("UIListLayout")
-            articleLayout.FillDirection = Enum.FillDirection.Horizontal
-            articleLayout.Padding = UDim.new(0, 15)
-            articleLayout.Parent = articleFrame
-
-            -- Foto del autor (circular)
             local authorThumb = Instance.new("ImageLabel")
             authorThumb.Size = UDim2.new(0, 60, 0, 60)
             authorThumb.Position = UDim2.new(0, 0, 0, 10)
@@ -651,16 +630,9 @@ function loadArticles(query)
             thumbCorner.CornerRadius = UDim.new(1, 0)
             thumbCorner.Parent = authorThumb
 
-            -- Contenedor de texto
-            local textContainer = Instance.new("Frame")
-            textContainer.Size = UDim2.new(1, -75, 1, 0)
-            textContainer.BackgroundTransparency = 1
-            textContainer.Parent = articleFrame
-
-            -- Título del artículo (clickeable)
             local articleTitle = Instance.new("TextButton")
-            articleTitle.Size = UDim2.new(1, 0, 0, 30)
-            articleTitle.Position = UDim2.new(0, 0, 0, 5)
+            articleTitle.Size = UDim2.new(1, -80, 0, 30)
+            articleTitle.Position = UDim2.new(0, 75, 0, 5)
             articleTitle.BackgroundTransparency = 1
             articleTitle.Text = article.title
             articleTitle.Font = Enum.Font.GothamBold
@@ -668,12 +640,11 @@ function loadArticles(query)
             articleTitle.TextColor3 = Color3.fromRGB(26, 13, 171)
             articleTitle.TextXAlignment = Enum.TextXAlignment.Left
             articleTitle.TextTruncate = Enum.TextTruncate.AtEnd
-            articleTitle.Parent = textContainer
+            articleTitle.Parent = articleFrame
 
-            -- Descripción
             local articleDesc = Instance.new("TextLabel")
-            articleDesc.Size = UDim2.new(1, 0, 0, 60)
-            articleDesc.Position = UDim2.new(0, 0, 0, 40)
+            articleDesc.Size = UDim2.new(1, -80, 0, 60)
+            articleDesc.Position = UDim2.new(0, 75, 0, 40)
             articleDesc.BackgroundTransparency = 1
             articleDesc.Text = article.description
             articleDesc.Font = Enum.Font.Gotham
@@ -682,21 +653,19 @@ function loadArticles(query)
             articleDesc.TextXAlignment = Enum.TextXAlignment.Left
             articleDesc.TextYAlignment = Enum.TextYAlignment.Top
             articleDesc.TextWrapped = true
-            articleDesc.Parent = textContainer
+            articleDesc.Parent = articleFrame
 
-            -- Autor y fecha
             local articleAuthor = Instance.new("TextLabel")
-            articleAuthor.Size = UDim2.new(1, 0, 0, 20)
-            articleAuthor.Position = UDim2.new(0, 0, 1, -25)
+            articleAuthor.Size = UDim2.new(1, -80, 0, 20)
+            articleAuthor.Position = UDim2.new(0, 75, 1, -25)
             articleAuthor.BackgroundTransparency = 1
             articleAuthor.Text = "Por " .. article.author .. " • " .. article.dateCreated
             articleAuthor.Font = Enum.Font.Gotham
             articleAuthor.TextSize = 14
             articleAuthor.TextColor3 = Color3.fromRGB(120, 120, 120)
             articleAuthor.TextXAlignment = Enum.TextXAlignment.Left
-            articleAuthor.Parent = textContainer
+            articleAuthor.Parent = articleFrame
 
-            -- Evento click en título
             articleTitle.MouseButton1Click:Connect(function()
                 showArticle(article.id)
             end)
@@ -706,7 +675,6 @@ function loadArticles(query)
     resultsFrame.CanvasSize = UDim2.new(0, 0, 0, resultsLayout.AbsoluteContentSize.Y + 60)
 end
 
--- Ejecutar búsqueda
 local function runSearch(inputBox)
     local query = inputBox.Text
     loadArticles(query)
@@ -723,8 +691,8 @@ searchBox.FocusLost:Connect(function(enterPressed)
     end
 end)
 
-local headerSearchBox = searchContainerHeader:WaitForChild("SearchBox")
-local headerSearchButton = searchContainerHeader:FindFirstChild("TextButton")
+local headerSearchBox = searchContainerHeader:FindFirstChild("SearchBox")
+local headerSearchButton = searchContainerHeader:FindFirstChildOfClass("TextButton")
 
 if headerSearchButton then
     headerSearchButton.MouseButton1Click:Connect(function()
@@ -732,18 +700,19 @@ if headerSearchButton then
     end)
 end
 
-headerSearchBox.FocusLost:Connect(function(enterPressed)
-    if enterPressed then
-        runSearch(headerSearchBox)
-    end
-end)
+if headerSearchBox then
+    headerSearchBox.FocusLost:Connect(function(enterPressed)
+        if enterPressed then
+            runSearch(headerSearchBox)
+        end
+    end)
+end
 
--- Botón volver
 backButton.MouseButton1Click:Connect(function()
     setInterfaceView("results")
 end)
 
--- Cargar artículos iniciales
 loadArticles("")
 
-print("✓ Roogle cargado con sistema completo de artículos")
+print("✓ Roogle cargado exitosamente")
+print("✓ Interfaz lista para usar")
