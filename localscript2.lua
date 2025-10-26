@@ -1001,16 +1001,29 @@ R.loadMusic = function(query)
                         local musicTitle = Instance.new("TextButton")
                         musicTitle.Size = UDim2.new(1, 0, 0, 24)
                         musicTitle.BackgroundTransparency = 1
-                        musicTitle.Text = "🎵 " .. music.name
+                        local priceText = (music.price and music.price > 0) and " 💰 " .. music.price .. " R$" or ""
+                        musicTitle.Text = "🎵 " .. music.name .. priceText
                         musicTitle.Font = Enum.Font.GothamBold
                         musicTitle.TextSize = 18
-                        musicTitle.TextColor3 = Color3.fromRGB(255, 87, 34)
+                        musicTitle.TextColor3 = (music.price and music.price > 0) and Color3.fromRGB(255, 193, 7) or Color3.fromRGB(255, 87, 34)
                         musicTitle.TextXAlignment = Enum.TextXAlignment.Left
                         musicTitle.LayoutOrder = 1
                         musicTitle.Parent = musicCard
                         
                         musicTitle.MouseButton1Click:Connect(function()
-                                R.openMusicPlayer(music)
+                                -- Verificar si necesita pago
+                                if music.price and music.price > 0 then
+                                        -- Verificar si ya compró
+                                        local success, result = pcall(function()
+                                                return R.purchaseMusicEvent:InvokeServer(music.id, music.gamePassId)
+                                        end)
+                                        
+                                        if success and result then
+                                                R.openMusicPlayer(music)
+                                        end
+                                else
+                                        R.openMusicPlayer(music)
+                                end
                         end)
 
                         local musicCategory = Instance.new("TextLabel")
@@ -1050,21 +1063,17 @@ end
 
 -- Función para crear sección de creadores destacados
 R.createFeaturedCreators = function(parent, layoutOrder)
+        -- CAMBIO: Usar evento que funciona para todos los usuarios
         local success, users = pcall(function()
-                return R.searchUsersEvent:InvokeServer("")
+                return R.getVerifiedUsersEvent:InvokeServer()
         end)
 
         if not success or not users or #users == 0 then
                 return
         end
 
-        -- Filtrar solo usuarios verificados
-        local verifiedUsers = {}
-        for _, user in ipairs(users) do
-                if user.verified then
-                        table.insert(verifiedUsers, user)
-                end
-        end
+        -- Ya vienen solo verificados del servidor
+        local verifiedUsers = users
 
         if #verifiedUsers == 0 then
                 return

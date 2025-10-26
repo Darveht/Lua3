@@ -211,48 +211,124 @@ musicCategoryLabel.LayoutOrder = 5
 musicCategoryLabel.ZIndex = 11
 musicCategoryLabel.Parent = musicFieldsContainer
 
-local musicCategoryInput = Instance.new("TextBox")
-musicCategoryInput.Name = "MusicCategoryInput"
-musicCategoryInput.Size = UDim2.new(1, 0, 0, 50)
-musicCategoryInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-musicCategoryInput.Text = ""
-musicCategoryInput.PlaceholderText = "Ej: Pop, Rock, Clásica..."
-musicCategoryInput.Font = Enum.Font.Gotham
-musicCategoryInput.TextSize = 18
-musicCategoryInput.TextColor3 = Color3.fromRGB(0, 0, 0)
-musicCategoryInput.TextXAlignment = Enum.TextXAlignment.Left
-musicCategoryInput.ClearTextOnFocus = false
-musicCategoryInput.BorderSizePixel = 0
-musicCategoryInput.LayoutOrder = 6
-musicCategoryInput.ZIndex = 11
-musicCategoryInput.Parent = musicFieldsContainer
+R.musicCategoryInput = Instance.new("TextBox")
+R.musicCategoryInput.Name = "MusicCategoryInput"
+R.musicCategoryInput.Size = UDim2.new(1, 0, 0, 50)
+R.musicCategoryInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+R.musicCategoryInput.Text = ""
+R.musicCategoryInput.PlaceholderText = "Ej: Pop, Rock, Electrónica..."
+R.musicCategoryInput.Font = Enum.Font.Gotham
+R.musicCategoryInput.TextSize = 18
+R.musicCategoryInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+R.musicCategoryInput.TextXAlignment = Enum.TextXAlignment.Left
+R.musicCategoryInput.ClearTextOnFocus = false
+R.musicCategoryInput.BorderSizePixel = 0
+R.musicCategoryInput.LayoutOrder = 6
+R.musicCategoryInput.ZIndex = 11
+R.musicCategoryInput.Parent = musicFieldsContainer
 
 local musicCategoryCorner = Instance.new("UICorner")
 musicCategoryCorner.CornerRadius = UDim.new(0, 10)
-musicCategoryCorner.Parent = musicCategoryInput
+musicCategoryCorner.Parent = R.musicCategoryInput
 
 local musicCategoryPadding = Instance.new("UIPadding")
 musicCategoryPadding.PaddingLeft = UDim.new(0, 15)
 musicCategoryPadding.PaddingRight = UDim.new(0, 15)
-musicCategoryPadding.Parent = musicCategoryInput
+musicCategoryPadding.Parent = R.musicCategoryInput
+
+-- NUEVO: Campo Precio (opcional)
+local musicPriceLabel = Instance.new("TextLabel")
+musicPriceLabel.Size = UDim2.new(1, 0, 0, 25)
+musicPriceLabel.BackgroundTransparency = 1
+musicPriceLabel.Text = "💰 Precio (Robux) - Opcional (0 = Gratis)"
+musicPriceLabel.Font = Enum.Font.GothamBold
+musicPriceLabel.TextSize = 18
+musicPriceLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
+musicPriceLabel.TextXAlignment = Enum.TextXAlignment.Left
+musicPriceLabel.LayoutOrder = 7
+musicPriceLabel.ZIndex = 11
+musicPriceLabel.Parent = musicFieldsContainer
+
+R.musicPriceInput = Instance.new("TextBox")
+R.musicPriceInput.Name = "MusicPriceInput"
+R.musicPriceInput.Size = UDim2.new(1, 0, 0, 50)
+R.musicPriceInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+R.musicPriceInput.Text = "0"
+R.musicPriceInput.PlaceholderText = "0 (Gratis) o pon un precio en Robux"
+R.musicPriceInput.Font = Enum.Font.Gotham
+R.musicPriceInput.TextSize = 18
+R.musicPriceInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+R.musicPriceInput.TextXAlignment = Enum.TextXAlignment.Left
+R.musicPriceInput.ClearTextOnFocus = false
+R.musicPriceInput.BorderSizePixel = 0
+R.musicPriceInput.LayoutOrder = 8
+R.musicPriceInput.ZIndex = 11
+R.musicPriceInput.Parent = musicFieldsContainer
+
+local musicPriceCorner = Instance.new("UICorner")
+musicPriceCorner.CornerRadius = UDim.new(0, 10)
+musicPriceCorner.Parent = R.musicPriceInput
+
+local musicPricePadding = Instance.new("UIPadding")
+musicPricePadding.PaddingLeft = UDim.new(0, 15)
+musicPricePadding.PaddingRight = UDim.new(0, 15)
+musicPricePadding.Parent = R.musicPriceInput
+
+-- NUEVO: Campo Game Pass ID (solo si tiene precio)
+local musicGamePassLabel = Instance.new("TextLabel")
+musicGamePassLabel.Size = UDim2.new(1, 0, 0, 25)
+musicGamePassLabel.BackgroundTransparency = 1
+musicGamePassLabel.Text = "🎫 ID del Game Pass (solo si tiene precio)"
+musicGamePassLabel.Font = Enum.Font.GothamBold
+musicGamePassLabel.TextSize = 18
+musicGamePassLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
+musicGamePassLabel.TextXAlignment = Enum.TextXAlignment.Left
+musicGamePassLabel.LayoutOrder = 9
+musicGamePassLabel.ZIndex = 11
+musicGamePassLabel.Parent = musicFieldsContainer
+
+R.musicGamePassInput = Instance.new("TextBox")
+R.musicGamePassInput.Name = "MusicGamePassInput"
+R.musicGamePassInput.Size = UDim2.new(1, 0, 0, 50)
+R.musicGamePassInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+R.musicGamePassInput.Text = ""
+R.musicGamePassInput.PlaceholderText = "Crea un Game Pass en Roblox y pon su ID aquí"
+R.musicGamePassInput.Font = Enum.Font.Gotham
+R.musicGamePassInput.TextSize = 18
+R.musicGamePassInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+R.musicGamePassInput.TextXAlignment = Enum.TextXAlignment.Left
+R.musicGamePassInput.ClearTextOnFocus = false
+R.musicGamePassInput.BorderSizePixel = 0
+R.musicGamePassInput.LayoutOrder = 10
+R.musicGamePassInput.ZIndex = 11
+R.musicGamePassInput.Parent = musicFieldsContainer
+
+local musicGamePassCorner = Instance.new("UICorner")
+musicGamePassCorner.CornerRadius = UDim.new(0, 10)
+musicGamePassCorner.Parent = R.musicGamePassInput
+
+local musicGamePassPadding = Instance.new("UIPadding")
+musicGamePassPadding.PaddingLeft = UDim.new(0, 15)
+musicGamePassPadding.PaddingRight = UDim.new(0, 15)
+musicGamePassPadding.Parent = R.musicGamePassInput
 
 -- Botón enviar
-local submitMusicButton = Instance.new("TextButton")
-submitMusicButton.Name = "SubmitMusicButton"
-submitMusicButton.Size = UDim2.new(1, 0, 0, 55)
-submitMusicButton.BackgroundColor3 = Color3.fromRGB(255, 87, 34)
-submitMusicButton.Text = "🎵 Enviar Música a Revisión"
-submitMusicButton.Font = Enum.Font.GothamBold
-submitMusicButton.TextSize = 20
-submitMusicButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-submitMusicButton.BorderSizePixel = 0
-submitMusicButton.LayoutOrder = 7
-submitMusicButton.ZIndex = 11
-submitMusicButton.Parent = musicFieldsContainer
+R.submitMusicButton = Instance.new("TextButton")
+R.submitMusicButton.Name = "SubmitMusicButton"
+R.submitMusicButton.Size = UDim2.new(1, 0, 0, 55)
+R.submitMusicButton.BackgroundColor3 = Color3.fromRGB(255, 87, 34)
+R.submitMusicButton.Text = "📤 Enviar Música a Revisión"
+R.submitMusicButton.Font = Enum.Font.GothamBold
+R.submitMusicButton.TextSize = 20
+R.submitMusicButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.submitMusicButton.BorderSizePixel = 0
+R.submitMusicButton.LayoutOrder = 11
+R.submitMusicButton.ZIndex = 11
+R.submitMusicButton.Parent = musicFieldsContainer
 
 local submitMusicCorner = Instance.new("UICorner")
 submitMusicCorner.CornerRadius = UDim.new(0, 10)
-submitMusicCorner.Parent = submitMusicButton
+submitMusicCorner.Parent = R.submitMusicButton
 
 -- ========== EVENTOS ==========
 musicButton.MouseButton1Click:Connect(function()
@@ -260,38 +336,74 @@ musicButton.MouseButton1Click:Connect(function()
     musicNameInput.Text = ""
     musicIdInput.Text = ""
     musicCategoryInput.Text = ""
+    musicPriceInput.Text = "0" -- Reset price to default
+    musicGamePassInput.Text = "" -- Reset Game Pass ID
 end)
 
 musicCloseButton.MouseButton1Click:Connect(function()
     musicPanel.Visible = false
 end)
 
-submitMusicButton.MouseButton1Click:Connect(function()
-    local musicName = musicNameInput.Text
-    local musicId = musicIdInput.Text
-    local musicCategory = musicCategoryInput.Text
+R.submitMusicButton.MouseButton1Click:Connect(function()
+        local musicName = R.musicNameInput.Text
+        local musicId = R.musicIdInput.Text
+        local category = R.musicCategoryInput.Text
+        local price = tonumber(R.musicPriceInput.Text) or 0
+        local gamePassId = R.musicGamePassInput.Text
 
-    if musicName ~= "" and musicId ~= "" and musicCategory ~= "" then
+        if musicName == "" or musicId == "" or category == "" then
+                warn("⚠ Por favor completa todos los campos obligatorios")
+                return
+        end
+
+        -- Validar que si tiene precio, debe tener Game Pass ID
+        if price > 0 and (gamePassId == "" or tonumber(gamePassId) == nil) then
+                warn("⚠ Si pones un precio, debes proporcionar un ID de Game Pass válido")
+                return
+        end
+
+        R.loadingPanel.Visible = true
+        R.loadingLabel.Text = "Enviando música..."
+
         local success, result = pcall(function()
-            return publishMusicFunction:InvokeServer(musicName, musicId, musicCategory)
+                return R.publishMusicFunction:InvokeServer(musicName, musicId, category, price, tonumber(gamePassId))
         end)
 
+        R.loadingPanel.Visible = false
+
         if success and result then
-            musicNameInput.Text = ""
-            musicIdInput.Text = ""
-            musicCategoryInput.Text = ""
-            musicPanel.Visible = false
-            print("✓ Música enviada a revisión")
+                R.musicNameInput.Text = ""
+                R.musicIdInput.Text = ""
+                R.musicCategoryInput.Text = ""
+                R.musicPriceInput.Text = "0"
+                R.musicGamePassInput.Text = ""
+                -- Assuming R.setInterfaceView exists and is used to switch UI views
+                -- If not, this line might need adjustment or removal.
+                if R.setInterfaceView then
+                    R.setInterfaceView("home")
+                end
+                print("✓ Música enviada a revisión")
         else
-            warn("✗ Error al enviar música")
+                warn("✗ Error al enviar música:", result)
         end
-    else
-        warn("⚠ Por favor completa todos los campos")
-    end
 end)
 
 task.wait(0.1)
-musicFieldsContainer.Size = UDim2.new(1, 0, 0, musicFieldsLayout.AbsoluteContentSize.Y)
-musicPanel.CanvasSize = UDim2.new(0, 0, 0, musicLayout.AbsoluteContentSize.Y + 60)
+-- Adjusting the size calculation to account for new elements
+local totalContentHeight = musicLayout.AbsoluteContentSize.Y + 60 -- Base height for header, etc.
+if musicFieldsContainer then
+    local fieldsLayoutAbsoluteContentSize = musicFieldsLayout.AbsoluteContentSize.Y
+    -- Add heights of all elements within musicFieldsContainer to ensure correct scrolling
+    local elements = musicFieldsContainer:GetChildren()
+    for _, element in ipairs(elements) do
+        if element:IsA("UIBaseObject") then
+            fieldsLayoutAbsoluteContentSize = fieldsLayoutAbsoluteContentSize + element.Size.Y.Offset + musicFieldsLayout.Padding.Y.Offset -- Rough estimation
+        end
+    end
+    musicFieldsContainer.Size = UDim2.new(1, 0, 0, fieldsLayoutAbsoluteContentSize)
+    totalContentHeight = totalContentHeight + fieldsLayoutAbsoluteContentSize
+end
+
+musicPanel.CanvasSize = UDim2.new(0, 0, 0, totalContentHeight)
 
 print("✓ Sistema de música cargado")

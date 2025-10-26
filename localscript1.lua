@@ -68,6 +68,8 @@ R.publishMusicFunction = R.remoteFolder:WaitForChild("PublishMusic", 10)
 R.getMusicEvent = R.remoteFolder:WaitForChild("GetMusic", 10)
 R.getPendingMusicEvent = R.remoteFolder:WaitForChild("GetPendingMusic", 10)
 R.toggleMusicStatusEvent = R.remoteFolder:WaitForChild("ToggleMusicStatus", 10)
+R.getVerifiedUsersEvent = R.remoteFolder:WaitForChild("GetVerifiedUsers", 10)
+R.purchaseMusicEvent = R.remoteFolder:WaitForChild("PurchaseMusic", 10)
 
 if not (R.getArticlesEvent and R.publishArticleFunction and R.checkAdminEvent and R.getArticleByIdEvent) then
         warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents necesarios")

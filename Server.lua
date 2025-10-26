@@ -174,6 +174,8 @@ local publishMusicFunction = createRemote("PublishMusic", "RemoteFunction")
 local getMusicEvent = createRemote("GetMusic", "RemoteFunction")
 local getPendingMusicEvent = createRemote("GetPendingMusic", "RemoteFunction")
 local toggleMusicStatusEvent = createRemote("ToggleMusicStatus", "RemoteFunction")
+local getVerifiedUsersEvent = createRemote("GetVerifiedUsers", "RemoteFunction")
+local purchaseMusicEvent = createRemote("PurchaseMusic", "RemoteFunction")
  
 -- FUNCIONES DEL SERVIDOR
  
@@ -902,8 +904,10 @@ local function saveMusicData()
 end
  
 -- Publicar música
-publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category)
+publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category, price, gamePassId)
     print(string.format("[%s] Enviando música a revisión: %s", player.Name, musicName))
+    
+    price = price or 0
     
     local newMusic = {
     id = generateId(),
@@ -915,13 +919,16 @@ publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, categ
     authorThumbnail = getPlayerThumbnail(player.UserId),
     timestamp = os.time(),
     dateCreated = os.date("%d/%m/%Y %H:%M"),
-    status = "pending"
+    status = "pending",
+    price = price,
+    gamePassId = gamePassId,
+    purchases = {}
     }
     
     table.insert(musicDatabase, 1, newMusic)
     saveMusicData()
     
-    print(string.format("[SERVER] Música '%s' enviada a revisión", musicName))
+    print(string.format("[SERVER] Música '%s' enviada a revisión (Precio: %d Robux)", musicName, price))
     return true
 end
  
@@ -969,6 +976,66 @@ toggleMusicStatusEvent.OnServerInvoke = function(player, musicId, newStatus)
     return false
 end
  
+-- Obtener usuarios verificados (para creadores destacados)
+getVerifiedUsersEvent.OnServerInvoke = function(player)
+    local verifiedUsers = {}
+    for _, user in ipairs(usersDatabase) do
+        if user.verified then
+            table.insert(verifiedUsers, user)
+        end
+    end
+    return verifiedUsers
+end
+
+-- Comprar música (verificar Game Pass)
+purchaseMusicEvent.OnServerInvoke = function(player, musicId, gamePassId)
+    -- Buscar la música
+    local music = nil
+    for _, m in ipairs(musicDatabase) do
+        if m.id == musicId then
+            music = m
+            break
+        end
+    end
+    
+    if not music then
+        return false, "Música no encontrada"
+    end
+    
+    -- Si es gratis, permitir acceso
+    if not music.price or music.price == 0 then
+        return true
+    end
+    
+    -- Verificar si ya compró
+    if music.purchases and table.find(music.purchases, player.UserId) then
+        return true
+    end
+    
+    -- Verificar si tiene el Game Pass
+    local hasGamePass = false
+    pcall(function()
+        hasGamePass = MarketplaceService:UserOwnsGamePassAsync(player.UserId, gamePassId)
+    end)
+    
+    if hasGamePass then
+        -- Registrar compra
+        if not music.purchases then
+            music.purchases = {}
+        end
+        table.insert(music.purchases, player.UserId)
+        saveMusicData()
+        print(string.format("[MÚSICA] %s compró '%s' por %d Robux", player.Name, music.name, music.price))
+        return true
+    else
+        -- Mostrar prompt de compra
+        pcall(function()
+            MarketplaceService:PromptGamePassPurchase(player, gamePassId)
+        end)
+        return false, "Esperando compra..."
+    end
+end
+
 -- Cargar música al inicio
 loadMusicData()
  
