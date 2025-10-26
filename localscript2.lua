@@ -10,6 +10,69 @@ local R = _G.RoogleClient
 
 R.previousView = "home"
 
+-- DECLARAR FUNCIONES QUE SE LLAMAN PRIMERO
+R.loadHomeSections = function()
+        -- Limpiar secciones anteriores
+        for _, child in ipairs(R.homeSectionsContainer:GetChildren()) do
+                if child:IsA("Frame") then
+                        child:Destroy()
+                end
+        end
+
+        local success, articles = pcall(function()
+                return R.getArticlesEvent:InvokeServer("")
+        end)
+
+        if not success or not articles then
+                return
+        end
+
+        -- Filtrar artículos del sistema
+        local systemArticles = {}
+        local userArticles = {}
+
+        for _, article in ipairs(articles) do
+                if article.author == "Sistema" then
+                        table.insert(systemArticles, article)
+                else
+                        table.insert(userArticles, article)
+                end
+        end
+
+        -- Sección 1: Creadores Destacados
+        if R.createFeaturedCreators then
+                R.createFeaturedCreators(R.homeSectionsContainer, 1)
+        end
+
+        -- Sección 2: Artículos Destacados (del sistema)
+        if #systemArticles > 0 and R.createHomeSection then
+                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 2)
+        end
+
+        -- Sección 3: Artículos Nuevos (últimos 5)
+        local newArticles = {}
+        for i = 1, math.min(5, #userArticles) do
+                table.insert(newArticles, userArticles[i])
+        end
+        if #newArticles > 0 and R.createHomeSection then
+                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 3)
+        end
+
+        -- Sección 4: Artículos Recientes
+        if #userArticles > 5 then
+                local recentArticles = {}
+                for i = 6, math.min(15, #userArticles) do
+                        table.insert(recentArticles, userArticles[i])
+                end
+                if #recentArticles > 0 and R.createHomeSection then
+                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 4)
+                end
+        end
+
+        task.wait(0.1)
+        R.homeSectionsContainer.CanvasSize = UDim2.new(0, 0, 0, R.homeSectionsLayout.AbsoluteContentSize.Y + 30)
+end
+
 R.setInterfaceView = function(viewName)
         R.previousView = (R.centerContainer.Visible and "home") or (R.resultsFrame.Visible and "results") or (R.articleViewFrame.Visible and "article") or (R.profileFrame.Visible and "profile") or R.previousView
 
@@ -26,9 +89,7 @@ R.setInterfaceView = function(viewName)
         end
 
         if viewName == "home" then
-                if R.loadHomeSections then -- Asegurarse que la función ya existe
-                        R.loadHomeSections()
-                end
+                R.loadHomeSections()
         end
 end
 
@@ -1121,66 +1182,7 @@ R.createFeaturedCreators = function(parent, layoutOrder)
         end
 end
 
--- Función para cargar secciones en página de inicio
-R.loadHomeSections = function()
-        -- Limpiar secciones anteriores
-        for _, child in ipairs(R.homeSectionsContainer:GetChildren()) do
-                if child:IsA("Frame") then
-                        child:Destroy()
-                end
-        end
-
-        local success, articles = pcall(function()
-                return R.getArticlesEvent:InvokeServer("")
-        end)
-
-        if not success or not articles then
-                return
-        end
-
-        -- Filtrar artículos del sistema
-        local systemArticles = {}
-        local userArticles = {}
-
-        for _, article in ipairs(articles) do
-                if article.author == "Sistema" then
-                        table.insert(systemArticles, article)
-                else
-                        table.insert(userArticles, article)
-                end
-        end
-
-        -- Sección 1: Creadores Destacados (NUEVO)
-        R.createFeaturedCreators(R.homeSectionsContainer, 1)
-
-        -- Sección 2: Artículos Destacados (del sistema)
-        if #systemArticles > 0 then
-                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 2)
-        end
-
-        -- Sección 3: Artículos Nuevos (últimos 5)
-        local newArticles = {}
-        for i = 1, math.min(5, #userArticles) do
-                table.insert(newArticles, userArticles[i])
-        end
-        if #newArticles > 0 then
-                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 3)
-        end
-
-        -- Sección 4: Artículos Recientes
-        if #userArticles > 5 then
-                local recentArticles = {}
-                for i = 6, math.min(15, #userArticles) do
-                        table.insert(recentArticles, userArticles[i])
-                end
-                if #recentArticles > 0 then
-                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 4)
-                end
-        end
-
-        task.wait(0.1)
-        R.homeSectionsContainer.CanvasSize = UDim2.new(0, 0, 0, R.homeSectionsLayout.AbsoluteContentSize.Y + 30)
-end
+-- (loadHomeSections ya está definida al inicio del archivo)
 
 R.runSearch = function(textBox)
         local query = textBox.Text

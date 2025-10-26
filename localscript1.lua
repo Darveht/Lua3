@@ -33,40 +33,48 @@ end
 
 R.player.CharacterAdded:Connect(hideCharacter)
 
--- ESPERAR REMOTES (con timeout de seguridad)
-R.remoteFolder = R.ReplicatedStorage:WaitForChild("RoogleRemotes", 10)
+-- ESPERAR REMOTES (con timeout extendido)
+print("[CLIENT] Esperando RoogleRemotes del servidor...")
+R.remoteFolder = R.ReplicatedStorage:WaitForChild("RoogleRemotes", 30)
 
 if not R.remoteFolder then
-        warn("❌ ERROR: No se encontró la carpeta RoogleRemotes. Asegúrate de que Server.lua esté en ServerScriptService.")
+        warn("❌ ERROR: No se encontró la carpeta RoogleRemotes después de 30 segundos.")
+        warn("❌ Asegúrate de que Server.lua esté en ServerScriptService y el servidor esté funcionando.")
         return
 end
 
-R.getArticlesEvent = R.remoteFolder:WaitForChild("GetArticles", 5)
-R.publishArticleFunction = R.remoteFolder:WaitForChild("PublishArticle", 5)
-R.checkAdminEvent = R.remoteFolder:WaitForChild("CheckAdmin", 5)
-R.getArticleByIdEvent = R.remoteFolder:WaitForChild("GetArticleById", 5)
-R.getPendingArticlesEvent = R.remoteFolder:WaitForChild("GetPendingArticles", 5)
-R.getAllArticlesEvent = R.remoteFolder:WaitForChild("GetAllArticles", 5)
-R.toggleArticleStatusEvent = R.remoteFolder:WaitForChild("ToggleArticleStatus", 5)
-R.getUserProfileEvent = R.remoteFolder:WaitForChild("GetUserProfile", 5)
-R.followUserEvent = R.remoteFolder:WaitForChild("FollowUser", 5)
-R.unfollowUserEvent = R.remoteFolder:WaitForChild("UnfollowUser", 5)
-R.searchUsersEvent = R.remoteFolder:WaitForChild("SearchUsers", 5)
-R.verifyUserEvent = R.remoteFolder:WaitForChild("VerifyUser", 5)
-R.unverifyUserEvent = R.remoteFolder:WaitForChild("UnverifyUser", 5)
-R.getRobloxStatsEvent = R.remoteFolder:WaitForChild("GetRobloxStats", 5)
-R.checkBanStatusEvent = R.remoteFolder:WaitForChild("CheckBanStatus", 5)
-R.banUserEvent = R.remoteFolder:WaitForChild("BanUser", 5)
-R.unbanUserEvent = R.remoteFolder:WaitForChild("UnbanUser", 5)
-R.processUnbanPaymentEvent = R.remoteFolder:WaitForChild("ProcessUnbanPayment", 5)
-R.publishMusicFunction = R.remoteFolder:WaitForChild("PublishMusic", 5)
-R.getPendingMusicEvent = R.remoteFolder:WaitForChild("GetPendingMusic", 5)
-R.toggleMusicStatusEvent = R.remoteFolder:WaitForChild("ToggleMusicStatus", 5)
+print("[CLIENT] RoogleRemotes encontrado, cargando RemoteEvents...")
+
+-- Cargar todos los remotes con timeout individual
+R.getArticlesEvent = R.remoteFolder:WaitForChild("GetArticles", 10)
+R.publishArticleFunction = R.remoteFolder:WaitForChild("PublishArticle", 10)
+R.checkAdminEvent = R.remoteFolder:WaitForChild("CheckAdmin", 10)
+R.getArticleByIdEvent = R.remoteFolder:WaitForChild("GetArticleById", 10)
+R.getPendingArticlesEvent = R.remoteFolder:WaitForChild("GetPendingArticles", 10)
+R.getAllArticlesEvent = R.remoteFolder:WaitForChild("GetAllArticles", 10)
+R.toggleArticleStatusEvent = R.remoteFolder:WaitForChild("ToggleArticleStatus", 10)
+R.getUserProfileEvent = R.remoteFolder:WaitForChild("GetUserProfile", 10)
+R.followUserEvent = R.remoteFolder:WaitForChild("FollowUser", 10)
+R.unfollowUserEvent = R.remoteFolder:WaitForChild("UnfollowUser", 10)
+R.searchUsersEvent = R.remoteFolder:WaitForChild("SearchUsers", 10)
+R.verifyUserEvent = R.remoteFolder:WaitForChild("VerifyUser", 10)
+R.unverifyUserEvent = R.remoteFolder:WaitForChild("UnverifyUser", 10)
+R.getRobloxStatsEvent = R.remoteFolder:WaitForChild("GetRobloxStats", 10)
+R.checkBanStatusEvent = R.remoteFolder:WaitForChild("CheckBanStatus", 10)
+R.banUserEvent = R.remoteFolder:WaitForChild("BanUser", 10)
+R.unbanUserEvent = R.remoteFolder:WaitForChild("UnbanUser", 10)
+R.processUnbanPaymentEvent = R.remoteFolder:WaitForChild("ProcessUnbanPayment", 10)
+R.publishMusicFunction = R.remoteFolder:WaitForChild("PublishMusic", 10)
+R.getMusicEvent = R.remoteFolder:WaitForChild("GetMusic", 10)
+R.getPendingMusicEvent = R.remoteFolder:WaitForChild("GetPendingMusic", 10)
+R.toggleMusicStatusEvent = R.remoteFolder:WaitForChild("ToggleMusicStatus", 10)
 
 if not (R.getArticlesEvent and R.publishArticleFunction and R.checkAdminEvent and R.getArticleByIdEvent) then
-        warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents")
+        warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents necesarios")
         return
 end
+
+print("[CLIENT] ✓ Todos los RemoteEvents cargados exitosamente")
 
 -- Función para formatear números grandes (millones, miles)
 R.formatLargeNumber = function(num)
@@ -251,6 +259,22 @@ R.searchButtonHeader.Parent = R.searchBoxHeader
 local searchBtnHeaderCorner = Instance.new("UICorner")
 searchBtnHeaderCorner.CornerRadius = UDim.new(1, 0)
 searchBtnHeaderCorner.Parent = R.searchButtonHeader
+
+-- Botón Home (volver al inicio)
+R.homeButton = Instance.new("TextButton")
+R.homeButton.Size = UDim2.new(0, 40, 0, 40)
+R.homeButton.Position = UDim2.new(0, 10, 0.5, -20)
+R.homeButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+R.homeButton.Text = "🏠"
+R.homeButton.Font = Enum.Font.GothamBold
+R.homeButton.TextSize = 20
+R.homeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.homeButton.BorderSizePixel = 0
+R.homeButton.Parent = R.searchBoxHeader
+
+local homeBtnCorner = Instance.new("UICorner")
+homeBtnCorner.CornerRadius = UDim.new(1, 0)
+homeBtnCorner.Parent = R.homeButton
 
 -- PESTAÑAS DE BÚSQUEDA (Artículos / Música)
 local tabsContainer = Instance.new("Frame")

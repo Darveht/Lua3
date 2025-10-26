@@ -2,8 +2,9 @@
 -- Este script conecta todos los eventos y ejecuta la carga inicial.
 
 -- ESPERAR a que Core Y Functions terminen completamente
+print("[EVENTS] Esperando que Core y Functions carguen...")
 repeat task.wait(0.1) until _G.RoogleCoreLoaded and _G.RoogleFunctionsLoaded and _G.RoogleClient and _G.RoogleClient.setInterfaceView
-print("⏳ Core y Functions detectados, iniciando Events...")
+print("[EVENTS] ✓ Core y Functions detectados, iniciando Events...")
 local R = _G.RoogleClient
 
 -- ========== EVENTOS ==========
@@ -191,19 +192,22 @@ if R.isAdmin and R.adminPanelButton and R.adminPanel then
 end
 
 -- ========== CARGA INICIAL ==========
+print("[EVENTS] Cargando artículos iniciales...")
 R.loadArticles("")
+print("[EVENTS] Cargando secciones de inicio...")
 R.loadHomeSections()
 
-print("✓ Roogle Events (3/3) cargado: Eventos conectados.")
+print("========================================")
+print("✓ Roogle Events (3/3) cargado")
 print("✓ Roogle cargado exitosamente")
 print("✓ Interfaz lista para usar")
 print("✓ Persistencia de datos activada")
 print("✓ Sistema de perfiles implementado")
-print("✓ Insignias de verificación con palomita activadas")
-print("✓ Sistema de estados (pending/active/inactive)")
+print("✓ Insignias de verificación activadas")
+print("✓ Sistema de estados implementado")
 if R.isAdmin then
         print("✓ Modo administrador activado")
-        print("✓ Panel admin con gestión completa de artículos")
-        print("✓ Panel admin con búsqueda de usuarios en tiempo real")
+        print("✓ Panel admin completo")
 end
+print("========================================")
 
