@@ -12,7 +12,8 @@ local bannedUsersDataStore = DataStoreService:GetDataStore("RoogleBannedUsersV2"
 local MarketplaceService = game:GetService("MarketplaceService")
  
 -- ID del producto de Game Pass para desbaneo (100 Robux)
-local UNBAN_PRODUCT_ID = 3440708349 -- CAMBIAR por el ID del Developer Product que crees
+-- IMPORTANTE: Cambia este número por el ID real de tu Developer Product
+local UNBAN_PRODUCT_ID = 3440708349 -- CAMBIAR por el ID del Developer Product que creaste en https://create.roblox.com
  
 -- BASE DE DATOS EN MEMORIA
 local articlesDatabase = {} -- TODOS los artículos (activos e inactivos)
@@ -530,10 +531,21 @@ searchUsersEvent.OnServerInvoke = function(player, query)
         return {}
     end
     
+    -- Si no hay query, devolver TODOS los usuarios ordenados por nombre
     if not query or query == "" then
-        return usersDatabase
+        local sortedUsers = {}
+        for _, user in ipairs(usersDatabase) do
+            table.insert(sortedUsers, user)
+        end
+        -- Ordenar alfabéticamente
+        table.sort(sortedUsers, function(a, b)
+            return string.lower(a.username) < string.lower(b.username)
+        end)
+        print(string.format("[ADMIN %s] Mostrando %d usuarios totales", player.Name, #sortedUsers))
+        return sortedUsers
     end
     
+    -- Si hay query, filtrar por nombre
     local results = {}
     local queryLower = string.lower(query)
     
@@ -544,6 +556,7 @@ searchUsersEvent.OnServerInvoke = function(player, query)
         end
     end
     
+    print(string.format("[ADMIN %s] Búsqueda '%s': %d resultados", player.Name, query, #results))
     return results
 end
  
@@ -614,19 +627,21 @@ getRobloxStatsEvent.OnServerInvoke = function(player, targetUserId)
     }
 end
  
--- VERIFICAR ESTADO DE BANEO
-checkBanStatusEvent.OnServerInvoke = function(player)
-    local isBanned, banInfo = isUserBanned(player.UserId)
+-- VERIFICAR ESTADO DE BANEO (ahora acepta userId opcional para admins)
+checkBanStatusEvent.OnServerInvoke = function(player, targetUserId)
+    local checkUserId = targetUserId or player.UserId
+    local isBanned, banInfo = isUserBanned(checkUserId)
     if isBanned then
         local daysLeft = math.ceil((banInfo.banEndTime - os.time()) / 86400)
         return {
         isBanned = true,
         reason = banInfo.reason,
         daysLeft = daysLeft,
-        banEndTime = banInfo.banEndTime
+        banEndTime = banInfo.banEndTime,
+        userId = checkUserId
         }
     end
-    return { isBanned = false }
+    return { isBanned = false, userId = checkUserId }
 end
  
 -- BANEAR USUARIO (solo admins)
@@ -713,21 +728,22 @@ processUnbanPaymentEvent.OnServerInvoke = function(player)
     end
     
     -- Verificar que el producto existe
-    if UNBAN_PRODUCT_ID == 0 then
-        warn("[ERROR] UNBAN_PRODUCT_ID no configurado")
+    if UNBAN_PRODUCT_ID == 0 or UNBAN_PRODUCT_ID == 3440708349 then
+        warn("[ERROR] UNBAN_PRODUCT_ID no configurado correctamente")
         return false, "El sistema de pagos no está configurado. Contacta al administrador."
     end
     
     -- Procesar compra del producto
     local success, result = pcall(function()
-        return MarketplaceService:PromptProductPurchase(player, UNBAN_PRODUCT_ID)
+        MarketplaceService:PromptProductPurchase(player, UNBAN_PRODUCT_ID)
+        return true
     end)
     
     if success then
-        return true, "Procesando pago..."
+        return true, "Abre la ventana de compra para continuar..."
     else
         warn("[ERROR] Error al procesar pago:", result)
-        return false, "Error al procesar el pago"
+        return false, "Error al procesar el pago: " .. tostring(result)
     end
 end
  
@@ -759,22 +775,60 @@ MarketplaceService.ProcessReceipt = function(receiptInfo)
     return Enum.ProductPurchaseDecision.NotProcessedYet
 end
  
--- Verificar baneo cuando un jugador se conecta
+-- Verificar baneo y registrar usuario cuando se conecta
 Players.PlayerAdded:Connect(function(player)
     local isBanned, banInfo = isUserBanned(player.UserId)
     if isBanned then
         local daysLeft = math.ceil((banInfo.banEndTime - os.time()) / 86400)
-        local message = string.format(
-        "HAS SIDO ELIMINADO\n\n" ..
-        "Tu cuenta ha sido suspendida por el equipo de Glam.\n\n" ..
-        "Razón: %s\n\n" ..
-        "No podrás acceder al juego hasta dentro de %d días.\n\n" ..
-        "Puedes pagar 100 Robux para ser desbaneado inmediatamente.",
-        banInfo.reason,
-        daysLeft
-        )
-        player:Kick(message)
+        
+        -- PRIMERO mostrar opción de pago
+        task.wait(1)
+        
+        -- Intentar mostrar prompt de pago
+        if UNBAN_PRODUCT_ID ~= 0 and UNBAN_PRODUCT_ID ~= 3440708349 then
+            local success = pcall(function()
+                MarketplaceService:PromptProductPurchase(player, UNBAN_PRODUCT_ID)
+            end)
+            
+            if success then
+                print(string.format("[BANEO] Mostrando opción de pago a %s", player.Name))
+                -- Esperar un momento para que el usuario pueda comprar
+                task.wait(3)
+                
+                -- Verificar si sigue baneado después del intento de pago
+                local stillBanned = isUserBanned(player.UserId)
+                if stillBanned then
+                    local message = string.format(
+                    "HAS SIDO BLOQUEADO\n\n" ..
+                    "Tu cuenta ha sido suspendida por el equipo de Glam.\n\n" ..
+                    "Razón: %s\n\n" ..
+                    "No podrás acceder al juego hasta dentro de %d días.\n\n" ..
+                    "Puedes pagar 100 Robux para ser desbloqueado inmediatamente.",
+                    banInfo.reason,
+                    daysLeft
+                    )
+                    player:Kick(message)
+                    return
+                end
+            end
+        else
+            -- Si no hay producto configurado, kickear directamente
+            local message = string.format(
+            "HAS SIDO BLOQUEADO\n\n" ..
+            "Tu cuenta ha sido suspendida.\n\n" ..
+            "Razón: %s\n\n" ..
+            "Duración: %d días",
+            banInfo.reason,
+            daysLeft
+            )
+            player:Kick(message)
+            return
+        end
     end
+    
+    -- Registrar automáticamente al usuario en la base de datos
+    getOrCreateUser(player)
+    print(string.format("[REGISTRO] Usuario registrado: %s (ID: %d)", player.Name, player.UserId))
 end)
  
 -- Cargar datos al iniciar
