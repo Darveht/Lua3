@@ -20,12 +20,12 @@ Abre `Server.lua` y busca la sección `MUSIC_PRODUCTS` (alrededor de la línea 5
 
 ```lua
 local MUSIC_PRODUCTS = {
-    [10] = 1234567890,   -- Reemplaza con el ID de tu producto de 10 Robux
-    [25] = 1234567891,   -- Reemplaza con el ID de tu producto de 25 Robux
-    [50] = 1234567892,   -- Reemplaza con el ID de tu producto de 50 Robux
-    [100] = 1234567893,  -- Reemplaza con el ID de tu producto de 100 Robux
-    [250] = 1234567894,  -- Reemplaza con el ID de tu producto de 250 Robux
-    [500] = 1234567895,  -- Reemplaza con el ID de tu producto de 500 Robux
+    [10] = 3441308871,   -- Music Price 0 - 10 Robux
+    [25] = 3441309296,   -- Music Price 1 - 25 Robux
+    [50] = 3441309591,   -- Music Price 2 - 50 Robux
+    [100] = 3441309922,  -- Music Price 3 - 100 Robux
+    [250] = 3441310287,  -- Music Price 4 - 250 Robux
+    [500] = 3441310533,  -- Music Price 5 - 500 Robux
 }
 ```
 

@@ -885,12 +885,12 @@ print("✓ Sistema listo para usar")
 -- CREA ESTOS DEVELOPER PRODUCTS EN https://create.roblox.com
 -- Luego reemplaza estos IDs con los tuyos
 local MUSIC_PRODUCTS = {
-    [10] = 0,   -- Developer Product ID para 10 Robux - CAMBIAR
-    [25] = 0,   -- Developer Product ID para 25 Robux - CAMBIAR
-    [50] = 0,   -- Developer Product ID para 50 Robux - CAMBIAR
-    [100] = 0,  -- Developer Product ID para 100 Robux - CAMBIAR
-    [250] = 0,  -- Developer Product ID para 250 Robux - CAMBIAR
-    [500] = 0,  -- Developer Product ID para 500 Robux - CAMBIAR
+    [10] = 3441308871,   -- Music Price 0 - 10 Robux
+    [25] = 3441309296,   -- Music Price 1 - 25 Robux
+    [50] = 3441309591,   -- Music Price 2 - 50 Robux
+    [100] = 3441309922,  -- Music Price 3 - 100 Robux
+    [250] = 3441310287,  -- Music Price 4 - 250 Robux
+    [500] = 3441310533,  -- Music Price 5 - 500 Robux
 }
 
 -- Función para obtener el producto más cercano al precio solicitado
