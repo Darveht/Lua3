@@ -1,4 +1,3 @@
-
 -- LocalScript: Coloca esto en StarterPlayer > StarterPlayerScripts
 
 local Players = game:GetService("Players")
