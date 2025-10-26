@@ -904,25 +904,24 @@ local function saveMusicData()
 end
  
 -- Publicar música
-publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category, price, gamePassId)
+publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category, price)
     print(string.format("[%s] Enviando música a revisión: %s", player.Name, musicName))
     
-    price = price or 0
+    price = tonumber(price) or 0
     
     local newMusic = {
-    id = generateId(),
-    name = musicName,
-    audioId = musicId,
-    category = category,
-    author = player.Name,
-    authorId = player.UserId,
-    authorThumbnail = getPlayerThumbnail(player.UserId),
-    timestamp = os.time(),
-    dateCreated = os.date("%d/%m/%Y %H:%M"),
-    status = "pending",
-    price = price,
-    gamePassId = gamePassId,
-    purchases = {}
+        id = generateId(),
+        name = musicName,
+        audioId = musicId,
+        category = category,
+        author = player.Name,
+        authorId = player.UserId,
+        authorThumbnail = getPlayerThumbnail(player.UserId),
+        timestamp = os.time(),
+        dateCreated = os.date("%d/%m/%Y %H:%M"),
+        status = "pending",
+        price = price,
+        purchases = {} -- Usuarios que ya compraron
     }
     
     table.insert(musicDatabase, 1, newMusic)
@@ -987,8 +986,8 @@ getVerifiedUsersEvent.OnServerInvoke = function(player)
     return verifiedUsers
 end
 
--- Comprar música (verificar Game Pass)
-purchaseMusicEvent.OnServerInvoke = function(player, musicId, gamePassId)
+-- Comprar música (crear Developer Product dinámico)
+purchaseMusicEvent.OnServerInvoke = function(player, musicId)
     -- Buscar la música
     local music = nil
     for _, m in ipairs(musicDatabase) do
@@ -1004,36 +1003,78 @@ purchaseMusicEvent.OnServerInvoke = function(player, musicId, gamePassId)
     
     -- Si es gratis, permitir acceso
     if not music.price or music.price == 0 then
-        return true
+        return true, "free"
     end
     
     -- Verificar si ya compró
     if music.purchases and table.find(music.purchases, player.UserId) then
-        return true
+        return true, "owned"
     end
     
-    -- Verificar si tiene el Game Pass
-    local hasGamePass = false
-    pcall(function()
-        hasGamePass = MarketplaceService:UserOwnsGamePassAsync(player.UserId, gamePassId)
+    -- Crear un Developer Product temporal con el precio especificado
+    -- NOTA: En producción, deberías crear los Developer Products de antemano
+    -- Por ahora, mostraremos un prompt de pago genérico
+    
+    -- Buscar o crear un Developer Product para este precio
+    local productId = music.productId
+    
+    if not productId then
+        -- Si no existe, necesitarás crear uno manualmente en https://create.roblox.com
+        -- Por ahora, guardamos el ID del producto en la música
+        warn(string.format("[MÚSICA] La música '%s' necesita un Developer Product configurado", music.name))
+        return false, "Esta música requiere configuración del administrador"
+    end
+    
+    -- Mostrar prompt de compra
+    local success, error = pcall(function()
+        MarketplaceService:PromptProductPurchase(player, productId)
     end)
     
-    if hasGamePass then
-        -- Registrar compra
-        if not music.purchases then
-            music.purchases = {}
-        end
-        table.insert(music.purchases, player.UserId)
-        saveMusicData()
-        print(string.format("[MÚSICA] %s compró '%s' por %d Robux", player.Name, music.name, music.price))
-        return true
+    if success then
+        return false, "awaiting_purchase"
     else
-        -- Mostrar prompt de compra
-        pcall(function()
-            MarketplaceService:PromptGamePassPurchase(player, gamePassId)
-        end)
-        return false, "Esperando compra..."
+        warn("[MÚSICA] Error al mostrar prompt:", error)
+        return false, "Error al procesar pago"
     end
+end
+
+-- Procesar compra de música completada
+local function processMusicPurchase(receiptInfo)
+    local userId = receiptInfo.PlayerId
+    local productId = receiptInfo.ProductId
+    
+    -- Buscar la música asociada a este producto
+    for _, music in ipairs(musicDatabase) do
+        if music.productId == productId then
+            -- Registrar compra
+            if not music.purchases then
+                music.purchases = {}
+            end
+            
+            if not table.find(music.purchases, userId) then
+                table.insert(music.purchases, userId)
+                saveMusicData()
+                print(string.format("[MÚSICA] Usuario %d compró '%s' por %d Robux", userId, music.name, music.price))
+            end
+            
+            return Enum.ProductPurchaseDecision.PurchaseGranted
+        end
+    end
+    
+    return Enum.ProductPurchaseDecision.NotProcessedYet
+end
+
+-- Actualizar ProcessReceipt para incluir música
+local originalProcessReceipt = MarketplaceService.ProcessReceipt
+MarketplaceService.ProcessReceipt = function(receiptInfo)
+    -- Primero intentar procesar como desbaneo
+    local unbanResult = originalProcessReceipt(receiptInfo)
+    if unbanResult == Enum.ProductPurchaseDecision.PurchaseGranted then
+        return unbanResult
+    end
+    
+    -- Si no es desbaneo, intentar como música
+    return processMusicPurchase(receiptInfo)
 end
 
 -- Cargar música al inicio

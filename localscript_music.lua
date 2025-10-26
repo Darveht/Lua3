@@ -274,43 +274,31 @@ musicPricePadding.PaddingLeft = UDim.new(0, 15)
 musicPricePadding.PaddingRight = UDim.new(0, 15)
 musicPricePadding.Parent = R.musicPriceInput
 
--- NUEVO: Campo Game Pass ID (solo si tiene precio)
-local musicGamePassLabel = Instance.new("TextLabel")
-musicGamePassLabel.Size = UDim2.new(1, 0, 0, 25)
-musicGamePassLabel.BackgroundTransparency = 1
-musicGamePassLabel.Text = "🎫 ID del Game Pass (solo si tiene precio)"
-musicGamePassLabel.Font = Enum.Font.GothamBold
-musicGamePassLabel.TextSize = 18
-musicGamePassLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
-musicGamePassLabel.TextXAlignment = Enum.TextXAlignment.Left
-musicGamePassLabel.LayoutOrder = 9
-musicGamePassLabel.ZIndex = 11
-musicGamePassLabel.Parent = musicFieldsContainer
+-- Nota informativa sobre monetización
+local musicPriceNote = Instance.new("TextLabel")
+musicPriceNote.Size = UDim2.new(1, 0, 0, 60)
+musicPriceNote.BackgroundColor3 = Color3.fromRGB(255, 243, 224)
+musicPriceNote.Text = "ℹ️ NOTA: Las músicas de pago requieren configuración del admin. Los pagos se procesarán automáticamente y recibirás el 50% de las ganancias."
+musicPriceNote.Font = Enum.Font.Gotham
+musicPriceNote.TextSize = 14
+musicPriceNote.TextColor3 = Color3.fromRGB(100, 100, 100)
+musicPriceNote.TextWrapped = true
+musicPriceNote.TextXAlignment = Enum.TextXAlignment.Left
+musicPriceNote.TextYAlignment = Enum.TextYAlignment.Top
+musicPriceNote.LayoutOrder = 9
+musicPriceNote.ZIndex = 11
+musicPriceNote.Parent = musicFieldsContainer
 
-R.musicGamePassInput = Instance.new("TextBox")
-R.musicGamePassInput.Name = "MusicGamePassInput"
-R.musicGamePassInput.Size = UDim2.new(1, 0, 0, 50)
-R.musicGamePassInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-R.musicGamePassInput.Text = ""
-R.musicGamePassInput.PlaceholderText = "Crea un Game Pass en Roblox y pon su ID aquí"
-R.musicGamePassInput.Font = Enum.Font.Gotham
-R.musicGamePassInput.TextSize = 18
-R.musicGamePassInput.TextColor3 = Color3.fromRGB(0, 0, 0)
-R.musicGamePassInput.TextXAlignment = Enum.TextXAlignment.Left
-R.musicGamePassInput.ClearTextOnFocus = false
-R.musicGamePassInput.BorderSizePixel = 0
-R.musicGamePassInput.LayoutOrder = 10
-R.musicGamePassInput.ZIndex = 11
-R.musicGamePassInput.Parent = musicFieldsContainer
+local musicPriceNoteCorner = Instance.new("UICorner")
+musicPriceNoteCorner.CornerRadius = UDim.new(0, 8)
+musicPriceNoteCorner.Parent = musicPriceNote
 
-local musicGamePassCorner = Instance.new("UICorner")
-musicGamePassCorner.CornerRadius = UDim.new(0, 10)
-musicGamePassCorner.Parent = R.musicGamePassInput
-
-local musicGamePassPadding = Instance.new("UIPadding")
-musicGamePassPadding.PaddingLeft = UDim.new(0, 15)
-musicGamePassPadding.PaddingRight = UDim.new(0, 15)
-musicGamePassPadding.Parent = R.musicGamePassInput
+local musicPriceNotePadding = Instance.new("UIPadding")
+musicPriceNotePadding.PaddingLeft = UDim.new(0, 12)
+musicPriceNotePadding.PaddingRight = UDim.new(0, 12)
+musicPriceNotePadding.PaddingTop = UDim.new(0, 10)
+musicPriceNotePadding.PaddingBottom = UDim.new(0, 10)
+musicPriceNotePadding.Parent = musicPriceNote
 
 -- Botón enviar
 R.submitMusicButton = Instance.new("TextButton")
@@ -345,20 +333,13 @@ musicCloseButton.MouseButton1Click:Connect(function()
 end)
 
 R.submitMusicButton.MouseButton1Click:Connect(function()
-        local musicName = R.musicNameInput.Text
-        local musicId = R.musicIdInput.Text
+        local musicName = musicNameInput.Text
+        local musicId = musicIdInput.Text
         local category = R.musicCategoryInput.Text
         local price = tonumber(R.musicPriceInput.Text) or 0
-        local gamePassId = R.musicGamePassInput.Text
 
         if musicName == "" or musicId == "" or category == "" then
                 warn("⚠ Por favor completa todos los campos obligatorios")
-                return
-        end
-
-        -- Validar que si tiene precio, debe tener Game Pass ID
-        if price > 0 and (gamePassId == "" or tonumber(gamePassId) == nil) then
-                warn("⚠ Si pones un precio, debes proporcionar un ID de Game Pass válido")
                 return
         end
 
@@ -366,22 +347,17 @@ R.submitMusicButton.MouseButton1Click:Connect(function()
         R.loadingLabel.Text = "Enviando música..."
 
         local success, result = pcall(function()
-                return R.publishMusicFunction:InvokeServer(musicName, musicId, category, price, tonumber(gamePassId))
+                return publishMusicFunction:InvokeServer(musicName, musicId, category, price)
         end)
 
         R.loadingPanel.Visible = false
 
         if success and result then
-                R.musicNameInput.Text = ""
-                R.musicIdInput.Text = ""
+                musicNameInput.Text = ""
+                musicIdInput.Text = ""
                 R.musicCategoryInput.Text = ""
                 R.musicPriceInput.Text = "0"
-                R.musicGamePassInput.Text = ""
-                -- Assuming R.setInterfaceView exists and is used to switch UI views
-                -- If not, this line might need adjustment or removal.
-                if R.setInterfaceView then
-                    R.setInterfaceView("home")
-                end
+                musicPanel.Visible = false
                 print("✓ Música enviada a revisión")
         else
                 warn("✗ Error al enviar música:", result)

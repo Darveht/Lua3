@@ -1015,7 +1015,7 @@ R.loadMusic = function(query)
                                 if music.price and music.price > 0 then
                                         -- Verificar si ya compró
                                         local success, result = pcall(function()
-                                                return R.purchaseMusicEvent:InvokeServer(music.id, music.gamePassId)
+                                                return R.purchaseMusicEvent:InvokeServer(music.id)
                                         end)
                                         
                                         if success and result then
