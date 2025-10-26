@@ -1,27 +1,21 @@
--- Roogle_Events.LocalScript (3 de 3)
--- Este script conecta todos los eventos y ejecuta la carga inicial.
 
--- ESPERAR a que Core Y Functions terminen completamente
-print("[EVENTS] Esperando que Core y Functions carguen...")
-repeat task.wait(0.1) until _G.RoogleCoreLoaded and _G.RoogleFunctionsLoaded and _G.RoogleClient and _G.RoogleClient.setInterfaceView
-print("[EVENTS] ✓ Core y Functions detectados, iniciando Events...")
+-- Roogle_Events.LocalScript (3 de 3)
+-- Este script conecta TODOS los eventos a las funciones y ejecuta la carga inicial.
+
+-- ESPERAR a que Core y Functions terminen de cargar completamente
+repeat task.wait(0.1) until _G.RoogleCoreLoaded and _G.RoogleFunctionsLoaded and _G.RoogleClient
+print("⏳ Core y Functions detectados, iniciando Events...")
 local R = _G.RoogleClient
 
--- ========== EVENTOS ==========
-
-R.searchButton.MouseButton1Click:Connect(function()
-        R.runSearch(R.searchBox)
-end)
-
+-- ========== EVENTOS DE BÚSQUEDA ==========
 R.searchBox.FocusLost:Connect(function(enterPressed)
         if enterPressed then
                 R.runSearch(R.searchBox)
         end
 end)
 
--- Búsqueda en header
-R.searchButtonHeader.MouseButton1Click:Connect(function()
-        R.runSearch(R.searchBoxHeader)
+R.searchButton.MouseButton1Click:Connect(function()
+        R.runSearch(R.searchBox)
 end)
 
 R.searchBoxHeader.FocusLost:Connect(function(enterPressed)
@@ -30,29 +24,13 @@ R.searchBoxHeader.FocusLost:Connect(function(enterPressed)
         end
 end)
 
--- PESTAÑAS DE BÚSQUEDA
-R.articlesTab.MouseButton1Click:Connect(function()
-        R.activeSearchTab = "articles"
-        R.articlesTab.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
-        R.articlesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        R.musicTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-        R.musicTab.TextColor3 = Color3.fromRGB(100, 100, 100)
-        R.loadArticles(R.searchBoxHeader.Text)
+R.searchButtonHeader.MouseButton1Click:Connect(function()
+        R.runSearch(R.searchBoxHeader)
 end)
 
-R.musicTab.MouseButton1Click:Connect(function()
-        R.activeSearchTab = "music"
-        R.musicTab.BackgroundColor3 = Color3.fromRGB(255, 87, 34)
-        R.musicTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-        R.articlesTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-        R.articlesTab.TextColor3 = Color3.fromRGB(100, 100, 100)
-        R.loadMusic(R.searchBoxHeader.Text)
-end)
-
--- Volver al inicio desde resultados
+-- ========== EVENTOS DE NAVEGACIÓN ==========
 R.homeButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("home")
-        R.searchBox.Text = ""
 end)
 
 R.backButton.MouseButton1Click:Connect(function()
@@ -63,18 +41,6 @@ R.profileBackButton.MouseButton1Click:Connect(function()
         R.setInterfaceView(R.previousView)
 end)
 
--- Panel de creador
-R.creatorButton.MouseButton1Click:Connect(function()
-        R.setInterfaceView("creator")
-        R.titleInput.Text = ""
-        R.contentInput.Text = ""
-end)
-
-R.creatorCloseButton.MouseButton1Click:Connect(function()
-        R.setInterfaceView("home")
-end)
-
--- Panel de configuración
 R.settingsButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("settings")
 end)
@@ -83,7 +49,6 @@ R.settingsCloseButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("home")
 end)
 
--- Panel de términos
 R.termsButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("terms")
 end)
@@ -92,122 +57,145 @@ R.termsCloseButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("settings")
 end)
 
+R.creatorButton.MouseButton1Click:Connect(function()
+        R.setInterfaceView("creator")
+end)
+
+R.creatorCloseButton.MouseButton1Click:Connect(function()
+        R.setInterfaceView("home")
+end)
+
+-- ========== EVENTOS DE PESTAÑAS DE BÚSQUEDA ==========
+R.articlesTab.MouseButton1Click:Connect(function()
+        if R.activeSearchTab ~= "articles" then
+                R.activeSearchTab = "articles"
+                R.articlesTab.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+                R.articlesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+                R.musicTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                R.musicTab.TextColor3 = Color3.fromRGB(100, 100, 100)
+                R.loadArticles(R.searchBoxHeader.Text)
+        end
+end)
+
+R.musicTab.MouseButton1Click:Connect(function()
+        if R.activeSearchTab ~= "music" then
+                R.activeSearchTab = "music"
+                R.musicTab.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+                R.musicTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+                R.articlesTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                R.articlesTab.TextColor3 = Color3.fromRGB(100, 100, 100)
+                R.loadMusic(R.searchBoxHeader.Text)
+        end
+end)
+
+-- ========== EVENTOS DEL CREADOR ==========
 R.submitButton.MouseButton1Click:Connect(function()
         local title = R.titleInput.Text
         local category = R.categoryInput.Text
         local content = R.contentInput.Text
 
-        if title ~= "" and category ~= "" and content ~= "" then
+        if title == "" or category == "" or content == "" then
+                warn("⚠ Por favor completa todos los campos")
+                return
+        end
+
+        R.loadingPanel.Visible = true
+
+        local success, result = pcall(function()
+                return R.publishArticleFunction:InvokeServer(title, category, content)
+        end)
+
+        R.loadingPanel.Visible = false
+
+        if success and result then
+                R.titleInput.Text = ""
+                R.categoryInput.Text = ""
+                R.contentInput.Text = ""
+                R.setInterfaceView("home")
+                print("✓ Artículo enviado a revisión")
+        else
+                warn("✗ Error al enviar artículo")
+        end
+end)
+
+-- ========== EVENTOS DEL PANEL DE ADMIN ==========
+if R.isAdmin then
+        R.adminPanelButton.MouseButton1Click:Connect(function()
+                R.setInterfaceView("admin")
+                R.searchAndDisplayUsers("")
+                R.loadAllArticles()
+                R.loadAllMusic()
+        end)
+
+        R.adminCloseButton.MouseButton1Click:Connect(function()
+                R.setInterfaceView("home")
+        end)
+
+        R.refreshButton.MouseButton1Click:Connect(function()
+                R.loadAllArticles()
+        end)
+
+        R.refreshMusicButton.MouseButton1Click:Connect(function()
+                R.loadAllMusic()
+        end)
+
+        R.adminSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+                R.searchAndDisplayUsers(R.adminSearchBox.Text)
+        end)
+
+        R.systemPublishButton.MouseButton1Click:Connect(function()
+                local title = R.systemTitleInput.Text
+                local content = R.systemContentInput.Text
+
+                if title == "" or content == "" then
+                        warn("⚠ Por favor completa todos los campos")
+                        return
+                end
+
                 R.loadingPanel.Visible = true
-                R.loadingLabel.Text = "Enviando a revisión..."
-                R.creatorPanel.Visible = false
+                R.loadingLabel.Text = "Publicando anuncio..."
 
                 local success, result = pcall(function()
-                        return R.publishArticleFunction:InvokeServer(title, content, category, false)
+                        return R.publishArticleFunction:InvokeServer(title, "Sistema", content, true)
                 end)
 
                 R.loadingPanel.Visible = false
 
-                if success and result == true then
-                        print("✓ Artículo enviado a revisión")
-                        R.titleInput.Text = ""
-                        R.categoryInput.Text = ""
-                        R.contentInput.Text = ""
-                        R.setInterfaceView("home")
+                if success and result then
+                        R.systemTitleInput.Text = ""
+                        R.systemContentInput.Text = ""
+                        R.loadAllArticles()
+                        print("✓ Anuncio del sistema publicado")
                 else
-                        warn("✗ Error al enviar:", result)
+                        warn("✗ Error al publicar anuncio")
                 end
-        else
-                warn("⚠ Por favor completa todos los campos")
+        end)
+end
+
+-- ========== EVENTOS DEL REPRODUCTOR DE MÚSICA ==========
+R.closePlayerButton.MouseButton1Click:Connect(function()
+        R.musicPlayerPanel.Visible = false
+        if R.currentSound then
+                R.currentSound:Stop()
+                R.currentSound:Destroy()
+                R.currentSound = nil
         end
 end)
 
--- Panel de administrador (solo para admins)
-if R.isAdmin and R.adminPanelButton and R.adminPanel then
-        R.adminPanelButton.MouseButton1Click:Connect(function()
-                R.setInterfaceView("admin")
-                R.loadAllArticles()
-                R.searchAndDisplayUsers("")
-        end)
-
-        if R.adminCloseButton then
-                R.adminCloseButton.MouseButton1Click:Connect(function()
-                        R.setInterfaceView("home")
-                end)
-        end
-
-        -- Conectar botón de publicar sistema
-        if R.systemPublishButton then
-                R.systemPublishButton.MouseButton1Click:Connect(function()
-                        local title = R.systemTitleInput.Text
-                        local content = R.systemContentInput.Text
-
-                        if title ~= "" and content ~= "" then
-                                R.loadingPanel.Visible = true
-                                R.loadingLabel.Text = "Publicando anuncio del sistema..."
-
-                                -- Pasar true como cuarto parámetro para publicar como Sistema
-                                local success, result = pcall(function()
-                                        return R.publishArticleFunction:InvokeServer(title, content, "Anuncio", true)
-                                end)
-
-                                R.loadingPanel.Visible = false
-
-                                if success and result then
-                                        R.systemTitleInput.Text = ""
-                                        R.systemContentInput.Text = ""
-                                        R.loadAllArticles()
-                                        R.loadHomeSections() -- Actualizar página de inicio
-                                        print("✓ Anuncio del sistema publicado")
-                                else
-                                        warn("✗ Error al publicar anuncio")
-                                end
-                        else
-                                warn("⚠ Completa título y contenido")
-                        end
-                end)
-        end
+R.playPauseButton.MouseButton1Click:Connect(function()
+        if not R.currentSound then return end
         
-        -- Botón actualizar
-        if R.refreshButton then
-                R.refreshButton.MouseButton1Click:Connect(function()
-                        R.loadAllArticles()
-                        R.searchAndDisplayUsers(R.adminSearchBox.Text)
-                end)
+        if R.currentSound.IsPlaying then
+                R.currentSound:Pause()
+                R.playPauseButton.Text = "▶"
+        else
+                R.currentSound:Play()
+                R.playPauseButton.Text = "⏸"
         end
-
-        -- Búsqueda de usuarios en tiempo real
-        if R.adminSearchBox then
-                R.adminSearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-                        R.searchAndDisplayUsers(R.adminSearchBox.Text)
-                end)
-        end
-
-        -- Botón actualizar música
-        if R.refreshMusicButton then
-                R.refreshMusicButton.MouseButton1Click:Connect(function()
-                        R.loadAllMusic()
-                end)
-        end
-end
+end)
 
 -- ========== CARGA INICIAL ==========
-print("[EVENTS] Cargando artículos iniciales...")
-R.loadArticles("")
-print("[EVENTS] Cargando secciones de inicio...")
-R.loadHomeSections()
+task.wait(0.2)
+R.setInterfaceView("home")
 
-print("========================================")
-print("✓ Roogle Events (3/3) cargado")
-print("✓ Roogle cargado exitosamente")
-print("✓ Interfaz lista para usar")
-print("✓ Persistencia de datos activada")
-print("✓ Sistema de perfiles implementado")
-print("✓ Insignias de verificación activadas")
-print("✓ Sistema de estados implementado")
-if R.isAdmin then
-        print("✓ Modo administrador activado")
-        print("✓ Panel admin completo")
-end
-print("========================================")
-
+print("✓ Articulum Events (3/3) cargado: Sistema completamente funcional.")

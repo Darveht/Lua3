@@ -120,10 +120,10 @@ centerLayout.Parent = R.centerContainer
 
 -- Logo
 R.logo = Instance.new("TextLabel")
-R.logo.Name = "RoogleLogo"
+R.logo.Name = "ArticulumLogo"
 R.logo.Size = UDim2.new(1, 0, 0, 60)
 R.logo.BackgroundTransparency = 1
-R.logo.Text = "Roogle"
+R.logo.Text = "Articulum"
 R.logo.Font = Enum.Font.GothamBold
 R.logo.TextSize = 52
 R.logo.TextColor3 = Color3.fromRGB(66, 133, 244)
@@ -165,7 +165,7 @@ R.searchBox.Name = "SearchBox"
 R.searchBox.Size = UDim2.new(1, -80, 1, 0)
 R.searchBox.BackgroundTransparency = 1
 R.searchBox.Text = ""
-R.searchBox.PlaceholderText = "Buscar en Roogle..."
+R.searchBox.PlaceholderText = "Buscar en Articulum..."
 R.searchBox.Font = Enum.Font.Gotham
 R.searchBox.TextSize = 18
 R.searchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -260,10 +260,11 @@ local searchBtnHeaderCorner = Instance.new("UICorner")
 searchBtnHeaderCorner.CornerRadius = UDim.new(1, 0)
 searchBtnHeaderCorner.Parent = R.searchButtonHeader
 
--- Botón Home (volver al inicio)
+-- Botón Home (volver al inicio) - Al lado del botón de búsqueda
 R.homeButton = Instance.new("TextButton")
 R.homeButton.Size = UDim2.new(0, 40, 0, 40)
-R.homeButton.Position = UDim2.new(0, 10, 0.5, -20)
+R.homeButton.Position = UDim2.new(1, -95, 0.5, -20)
+R.homeButton.AnchorPoint = Vector2.new(0, 0)
 R.homeButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
 R.homeButton.Text = "🏠"
 R.homeButton.Font = Enum.Font.GothamBold
@@ -1120,6 +1121,161 @@ if R.isAdmin then
         allMusicPadding.PaddingBottom = UDim.new(0, 15)
         allMusicPadding.Parent = R.allMusicContainer
 end
+
+-- ========== PANEL DE REPRODUCTOR DE MÚSICA ==========
+R.musicPlayerPanel = Instance.new("Frame")
+R.musicPlayerPanel.Name = "MusicPlayerPanel"
+R.musicPlayerPanel.Size = UDim2.new(1, 0, 1, 0)
+R.musicPlayerPanel.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+R.musicPlayerPanel.BorderSizePixel = 0
+R.musicPlayerPanel.Visible = false
+R.musicPlayerPanel.ZIndex = 15
+R.musicPlayerPanel.Parent = R.mainFrame
+
+local playerLayout = Instance.new("UIListLayout")
+playerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+playerLayout.Padding = UDim.new(0, 25)
+playerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+playerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+playerLayout.Parent = R.musicPlayerPanel
+
+local playerPadding = Instance.new("UIPadding")
+playerPadding.PaddingLeft = UDim.new(0, 40)
+playerPadding.PaddingRight = UDim.new(0, 40)
+playerPadding.PaddingTop = UDim.new(0, 60)
+playerPadding.PaddingBottom = UDim.new(0, 60)
+playerPadding.Parent = R.musicPlayerPanel
+
+-- Botón cerrar reproductor
+R.closePlayerButton = Instance.new("TextButton")
+R.closePlayerButton.Size = UDim2.new(0, 50, 0, 50)
+R.closePlayerButton.Position = UDim2.new(1, -20, 0, 20)
+R.closePlayerButton.AnchorPoint = Vector2.new(1, 0)
+R.closePlayerButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+R.closePlayerButton.Text = "✕"
+R.closePlayerButton.Font = Enum.Font.GothamBold
+R.closePlayerButton.TextSize = 28
+R.closePlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.closePlayerButton.BorderSizePixel = 0
+R.closePlayerButton.ZIndex = 16
+R.closePlayerButton.Parent = R.musicPlayerPanel
+
+local closePlayerCorner = Instance.new("UICorner")
+closePlayerCorner.CornerRadius = UDim.new(1, 0)
+closePlayerCorner.Parent = R.closePlayerButton
+
+-- Nombre de la música
+R.musicPlayerTitle = Instance.new("TextLabel")
+R.musicPlayerTitle.Size = UDim2.new(1, 0, 0, 50)
+R.musicPlayerTitle.BackgroundTransparency = 1
+R.musicPlayerTitle.Text = "Nombre de la Música"
+R.musicPlayerTitle.Font = Enum.Font.GothamBold
+R.musicPlayerTitle.TextSize = 32
+R.musicPlayerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.musicPlayerTitle.LayoutOrder = 1
+R.musicPlayerTitle.ZIndex = 16
+R.musicPlayerTitle.Parent = R.musicPlayerPanel
+
+-- Categoría
+R.musicPlayerCategory = Instance.new("TextLabel")
+R.musicPlayerCategory.Size = UDim2.new(1, 0, 0, 25)
+R.musicPlayerCategory.BackgroundTransparency = 1
+R.musicPlayerCategory.Text = "Categoría"
+R.musicPlayerCategory.Font = Enum.Font.Gotham
+R.musicPlayerCategory.TextSize = 18
+R.musicPlayerCategory.TextColor3 = Color3.fromRGB(180, 180, 180)
+R.musicPlayerCategory.LayoutOrder = 2
+R.musicPlayerCategory.ZIndex = 16
+R.musicPlayerCategory.Parent = R.musicPlayerPanel
+
+-- Barra de progreso
+local progressContainer = Instance.new("Frame")
+progressContainer.Size = UDim2.new(1, 0, 0, 60)
+progressContainer.BackgroundTransparency = 1
+progressContainer.LayoutOrder = 3
+progressContainer.ZIndex = 16
+progressContainer.Parent = R.musicPlayerPanel
+
+local progressLayout = Instance.new("UIListLayout")
+progressLayout.SortOrder = Enum.SortOrder.LayoutOrder
+progressLayout.Padding = UDim.new(0, 10)
+progressLayout.Parent = progressContainer
+
+-- Barra de progreso visual
+local progressBarBg = Instance.new("Frame")
+progressBarBg.Size = UDim2.new(1, 0, 0, 8)
+progressBarBg.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+progressBarBg.BorderSizePixel = 0
+progressBarBg.LayoutOrder = 1
+progressBarBg.ZIndex = 16
+progressBarBg.Parent = progressContainer
+
+local progressBarBgCorner = Instance.new("UICorner")
+progressBarBgCorner.CornerRadius = UDim.new(1, 0)
+progressBarBgCorner.Parent = progressBarBg
+
+R.musicProgressBar = Instance.new("Frame")
+R.musicProgressBar.Size = UDim2.new(0, 0, 1, 0)
+R.musicProgressBar.BackgroundColor3 = Color3.fromRGB(30, 215, 96)
+R.musicProgressBar.BorderSizePixel = 0
+R.musicProgressBar.ZIndex = 17
+R.musicProgressBar.Parent = progressBarBg
+
+local progressBarCorner = Instance.new("UICorner")
+progressBarCorner.CornerRadius = UDim.new(1, 0)
+progressBarCorner.Parent = R.musicProgressBar
+
+-- Tiempos
+local timesContainer = Instance.new("Frame")
+timesContainer.Size = UDim2.new(1, 0, 0, 20)
+timesContainer.BackgroundTransparency = 1
+timesContainer.LayoutOrder = 2
+timesContainer.ZIndex = 16
+timesContainer.Parent = progressContainer
+
+R.currentTimeLabel = Instance.new("TextLabel")
+R.currentTimeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+R.currentTimeLabel.Position = UDim2.new(0, 0, 0, 0)
+R.currentTimeLabel.BackgroundTransparency = 1
+R.currentTimeLabel.Text = "0:00"
+R.currentTimeLabel.Font = Enum.Font.Gotham
+R.currentTimeLabel.TextSize = 14
+R.currentTimeLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+R.currentTimeLabel.TextXAlignment = Enum.TextXAlignment.Left
+R.currentTimeLabel.ZIndex = 16
+R.currentTimeLabel.Parent = timesContainer
+
+R.totalTimeLabel = Instance.new("TextLabel")
+R.totalTimeLabel.Size = UDim2.new(0.5, 0, 1, 0)
+R.totalTimeLabel.Position = UDim2.new(0.5, 0, 0, 0)
+R.totalTimeLabel.BackgroundTransparency = 1
+R.totalTimeLabel.Text = "0:00"
+R.totalTimeLabel.Font = Enum.Font.Gotham
+R.totalTimeLabel.TextSize = 14
+R.totalTimeLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+R.totalTimeLabel.TextXAlignment = Enum.TextXAlignment.Right
+R.totalTimeLabel.ZIndex = 16
+R.totalTimeLabel.Parent = timesContainer
+
+-- Controles (Play/Pause)
+R.playPauseButton = Instance.new("TextButton")
+R.playPauseButton.Size = UDim2.new(0, 80, 0, 80)
+R.playPauseButton.BackgroundColor3 = Color3.fromRGB(30, 215, 96)
+R.playPauseButton.Text = "▶"
+R.playPauseButton.Font = Enum.Font.GothamBold
+R.playPauseButton.TextSize = 40
+R.playPauseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+R.playPauseButton.BorderSizePixel = 0
+R.playPauseButton.LayoutOrder = 4
+R.playPauseButton.ZIndex = 16
+R.playPauseButton.Parent = R.musicPlayerPanel
+
+local playPauseCorner = Instance.new("UICorner")
+playPauseCorner.CornerRadius = UDim.new(1, 0)
+playPauseCorner.Parent = R.playPauseButton
+
+-- Objeto Sound (invisible)
+R.currentSound = nil
 
 -- ========== PANEL DE CONFIGURACIÓN ==========
 R.settingsPanel = Instance.new("ScrollingFrame")

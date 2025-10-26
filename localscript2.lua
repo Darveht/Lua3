@@ -876,6 +876,62 @@ R.loadArticles = function(query)
         R.resultsScrollFrame.CanvasSize = UDim2.new(0, 0, 0, R.resultsLayout.AbsoluteContentSize.Y + 60)
 end
 
+-- Función para abrir reproductor de música
+R.openMusicPlayer = function(musicData)
+        -- Detener música anterior si existe
+        if R.currentSound then
+                R.currentSound:Stop()
+                R.currentSound:Destroy()
+                R.currentSound = nil
+        end
+
+        -- Actualizar interfaz
+        R.musicPlayerTitle.Text = musicData.name
+        R.musicPlayerCategory.Text = musicData.category
+        R.currentTimeLabel.Text = "0:00"
+        R.totalTimeLabel.Text = "0:00"
+        R.musicProgressBar.Size = UDim2.new(0, 0, 1, 0)
+        R.playPauseButton.Text = "▶"
+
+        -- Crear nuevo Sound
+        local sound = Instance.new("Sound")
+        sound.SoundId = "rbxassetid://" .. musicData.audioId
+        sound.Volume = 0.5
+        sound.Parent = game.SoundService
+        R.currentSound = sound
+
+        -- Cargar el audio
+        sound.Loaded:Connect(function()
+                local duration = sound.TimeLength
+                local minutes = math.floor(duration / 60)
+                local seconds = math.floor(duration % 60)
+                R.totalTimeLabel.Text = string.format("%d:%02d", minutes, seconds)
+        end)
+
+        -- Actualizar progreso en tiempo real
+        task.spawn(function()
+                while R.currentSound and R.musicPlayerPanel.Visible do
+                        if R.currentSound.IsPlaying then
+                                local current = R.currentSound.TimePosition
+                                local total = R.currentSound.TimeLength
+                                
+                                if total > 0 then
+                                        local progress = current / total
+                                        R.musicProgressBar.Size = UDim2.new(progress, 0, 1, 0)
+                                        
+                                        local minutes = math.floor(current / 60)
+                                        local seconds = math.floor(current % 60)
+                                        R.currentTimeLabel.Text = string.format("%d:%02d", minutes, seconds)
+                                end
+                        end
+                        task.wait(0.1)
+                end
+        end)
+
+        -- Mostrar reproductor
+        R.musicPlayerPanel.Visible = true
+end
+
 -- Función para cargar música
 R.loadMusic = function(query)
         for _, child in ipairs(R.resultsScrollFrame:GetChildren()) do
@@ -942,7 +998,7 @@ R.loadMusic = function(query)
                         musicCardPadding.PaddingBottom = UDim.new(0, 15)
                         musicCardPadding.Parent = musicCard
 
-                        local musicTitle = Instance.new("TextLabel")
+                        local musicTitle = Instance.new("TextButton")
                         musicTitle.Size = UDim2.new(1, 0, 0, 24)
                         musicTitle.BackgroundTransparency = 1
                         musicTitle.Text = "🎵 " .. music.name
@@ -952,6 +1008,10 @@ R.loadMusic = function(query)
                         musicTitle.TextXAlignment = Enum.TextXAlignment.Left
                         musicTitle.LayoutOrder = 1
                         musicTitle.Parent = musicCard
+                        
+                        musicTitle.MouseButton1Click:Connect(function()
+                                R.openMusicPlayer(music)
+                        end)
 
                         local musicCategory = Instance.new("TextLabel")
                         musicCategory.Size = UDim2.new(1, 0, 0, 20)
@@ -1011,7 +1071,7 @@ R.createFeaturedCreators = function(parent, layoutOrder)
         end
 
         local creatorsSection = Instance.new("Frame")
-        creatorsSection.Size = UDim2.new(1, 0, 0, 220)
+        creatorsSection.Size = UDim2.new(1, 0, 0, 260)
         creatorsSection.BackgroundTransparency = 1
         creatorsSection.LayoutOrder = layoutOrder
         creatorsSection.Parent = parent
@@ -1033,13 +1093,13 @@ R.createFeaturedCreators = function(parent, layoutOrder)
         creatorsTitle.Parent = creatorsSection
 
         local creatorsScroll = Instance.new("ScrollingFrame")
-        creatorsScroll.Size = UDim2.new(1, 0, 0, 180)
+        creatorsScroll.Size = UDim2.new(1, 0, 0, 220)
         creatorsScroll.BackgroundTransparency = 1
         creatorsScroll.BorderSizePixel = 0
         creatorsScroll.ScrollBarThickness = 4
         creatorsScroll.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
         creatorsScroll.ScrollingDirection = Enum.ScrollingDirection.X
-        creatorsScroll.CanvasSize = UDim2.new(0, #verifiedUsers * 150, 0, 0)
+        creatorsScroll.CanvasSize = UDim2.new(0, #verifiedUsers * 170, 0, 0)
         creatorsScroll.LayoutOrder = 2
         creatorsScroll.Parent = creatorsSection
 
@@ -1050,7 +1110,7 @@ R.createFeaturedCreators = function(parent, layoutOrder)
 
         for i, creator in ipairs(verifiedUsers) do
                 local creatorCard = Instance.new("Frame")
-                creatorCard.Size = UDim2.new(0, 130, 0, 170)
+                creatorCard.Size = UDim2.new(0, 150, 0, 210)
                 creatorCard.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
                 creatorCard.BorderSizePixel = 0
                 creatorCard.LayoutOrder = i
@@ -1062,46 +1122,56 @@ R.createFeaturedCreators = function(parent, layoutOrder)
 
                 local creatorCardLayout = Instance.new("UIListLayout")
                 creatorCardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-                creatorCardLayout.Padding = UDim.new(0, 8)
+                creatorCardLayout.Padding = UDim.new(0, 10)
                 creatorCardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
                 creatorCardLayout.Parent = creatorCard
 
                 local creatorCardPadding = Instance.new("UIPadding")
-                creatorCardPadding.PaddingTop = UDim.new(0, 15)
+                creatorCardPadding.PaddingTop = UDim.new(0, 20)
+                creatorCardPadding.PaddingBottom = UDim.new(0, 15)
                 creatorCardPadding.Parent = creatorCard
 
-                -- Foto circular
-                local creatorImage = Instance.new("ImageLabel")
-                creatorImage.Size = UDim2.new(0, 80, 0, 80)
-                creatorImage.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
-                creatorImage.Image = creator.thumbnail
-                creatorImage.LayoutOrder = 1
-                creatorImage.Parent = creatorCard
+                -- Botón de foto circular clickeable
+                local creatorImageButton = Instance.new("ImageButton")
+                creatorImageButton.Size = UDim2.new(0, 100, 0, 100)
+                creatorImageButton.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                creatorImageButton.Image = creator.thumbnail
+                creatorImageButton.LayoutOrder = 1
+                creatorImageButton.Parent = creatorCard
 
                 local creatorImageCorner = Instance.new("UICorner")
                 creatorImageCorner.CornerRadius = UDim.new(1, 0)
-                creatorImageCorner.Parent = creatorImage
+                creatorImageCorner.Parent = creatorImageButton
 
-                -- Nombre
-                local creatorName = Instance.new("TextLabel")
-                creatorName.Size = UDim2.new(1, -10, 0, 20)
-                creatorName.BackgroundTransparency = 1
-                creatorName.Text = creator.username
-                creatorName.Font = Enum.Font.GothamBold
-                creatorName.TextSize = 14
-                creatorName.TextColor3 = Color3.fromRGB(0, 0, 0)
-                creatorName.TextTruncate = Enum.TextTruncate.AtEnd
-                creatorName.LayoutOrder = 2
-                creatorName.Parent = creatorCard
+                -- Click en la foto abre el perfil
+                creatorImageButton.MouseButton1Click:Connect(function()
+                        R.showUserProfile(creator.userId)
+                end)
+
+                -- Nombre clickeable
+                local creatorNameButton = Instance.new("TextButton")
+                creatorNameButton.Size = UDim2.new(1, -10, 0, 22)
+                creatorNameButton.BackgroundTransparency = 1
+                creatorNameButton.Text = creator.username
+                creatorNameButton.Font = Enum.Font.GothamBold
+                creatorNameButton.TextSize = 15
+                creatorNameButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                creatorNameButton.TextTruncate = Enum.TextTruncate.AtEnd
+                creatorNameButton.LayoutOrder = 2
+                creatorNameButton.Parent = creatorCard
+
+                creatorNameButton.MouseButton1Click:Connect(function()
+                        R.showUserProfile(creator.userId)
+                end)
 
                 -- Botón seguir circular con +
                 local followBtn = Instance.new("TextButton")
                 followBtn.Name = "FollowButton"
-                followBtn.Size = UDim2.new(0, 40, 0, 40)
+                followBtn.Size = UDim2.new(0, 45, 0, 45)
                 followBtn.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
                 followBtn.Text = "+"
                 followBtn.Font = Enum.Font.GothamBold
-                followBtn.TextSize = 24
+                followBtn.TextSize = 26
                 followBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
                 followBtn.BorderSizePixel = 0
                 followBtn.LayoutOrder = 3
@@ -1130,7 +1200,7 @@ R.createFeaturedCreators = function(parent, layoutOrder)
                         -- Animación de escala
                         local originalSize = followBtn.Size
                         followBtn:TweenSize(
-                                UDim2.new(0, 35, 0, 35),
+                                UDim2.new(0, 40, 0, 40),
                                 Enum.EasingDirection.Out,
                                 Enum.EasingStyle.Quad,
                                 0.1,
@@ -1165,19 +1235,6 @@ R.createFeaturedCreators = function(parent, layoutOrder)
                                         followBtn.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
                                 end
                         end
-                end)
-
-                -- Hacer el resto de la tarjeta clickeable para ver perfil
-                local clickArea = Instance.new("TextButton")
-                clickArea.Size = UDim2.new(1, 0, 1, -50)
-                clickArea.Position = UDim2.new(0, 0, 0, 0)
-                clickArea.BackgroundTransparency = 1
-                clickArea.Text = ""
-                clickArea.ZIndex = 2
-                clickArea.Parent = creatorCard
-
-                clickArea.MouseButton1Click:Connect(function()
-                        R.showUserProfile(creator.userId)
                 end)
         end
 end
