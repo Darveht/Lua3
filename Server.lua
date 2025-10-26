@@ -1,4 +1,3 @@
-
 -- ServerScript: Coloca esto en ServerScriptService
 
 local Players = game:GetService("Players")
