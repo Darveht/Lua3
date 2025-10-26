@@ -20,15 +20,15 @@ R.player.CameraMinZoomDistance = 0.5
 
 -- Ocultar el jugador
 local function hideCharacter(character)
-	for _, part in ipairs(character:GetDescendants()) do
-		if part:IsA("BasePart") then
-			part.Transparency = 1
-		end
-	end
+        for _, part in ipairs(character:GetDescendants()) do
+                if part:IsA("BasePart") then
+                        part.Transparency = 1
+                end
+        end
 end
 
 if R.player.Character then
-	hideCharacter(R.player.Character)
+        hideCharacter(R.player.Character)
 end
 
 R.player.CharacterAdded:Connect(hideCharacter)
@@ -37,8 +37,8 @@ R.player.CharacterAdded:Connect(hideCharacter)
 R.remoteFolder = R.ReplicatedStorage:WaitForChild("RoogleRemotes", 10)
 
 if not R.remoteFolder then
-	warn("❌ ERROR: No se encontró la carpeta RoogleRemotes. Asegúrate de que Server.lua esté en ServerScriptService.")
-	return
+        warn("❌ ERROR: No se encontró la carpeta RoogleRemotes. Asegúrate de que Server.lua esté en ServerScriptService.")
+        return
 end
 
 R.getArticlesEvent = R.remoteFolder:WaitForChild("GetArticles", 5)
@@ -59,21 +59,24 @@ R.checkBanStatusEvent = R.remoteFolder:WaitForChild("CheckBanStatus", 5)
 R.banUserEvent = R.remoteFolder:WaitForChild("BanUser", 5)
 R.unbanUserEvent = R.remoteFolder:WaitForChild("UnbanUser", 5)
 R.processUnbanPaymentEvent = R.remoteFolder:WaitForChild("ProcessUnbanPayment", 5)
+R.publishMusicFunction = R.remoteFolder:WaitForChild("PublishMusic", 5)
+R.getPendingMusicEvent = R.remoteFolder:WaitForChild("GetPendingMusic", 5)
+R.toggleMusicStatusEvent = R.remoteFolder:WaitForChild("ToggleMusicStatus", 5)
 
 if not (R.getArticlesEvent and R.publishArticleFunction and R.checkAdminEvent and R.getArticleByIdEvent) then
-	warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents")
-	return
+        warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents")
+        return
 end
 
 -- Función para formatear números grandes (millones, miles)
 R.formatLargeNumber = function(num)
-	if num >= 1000000 then
-		return string.format("%.1fM", num / 1000000)
-	elseif num >= 1000 then
-		return string.format("%.1fK", num / 1000)
-	else
-		return tostring(num)
-	end
+        if num >= 1000000 then
+                return string.format("%.1fM", num / 1000000)
+        elseif num >= 1000 then
+                return string.format("%.1fK", num / 1000)
+        else
+                return tostring(num)
+        end
 end
 
 -- Verificar si es admin
@@ -426,10 +429,10 @@ R.clockLabel.Parent = R.mainFrame
 
 -- Actualizar reloj cada segundo
 task.spawn(function()
-	while true do
-		task.wait(1)
-		R.clockLabel.Text = os.date("%H:%M")
-	end
+        while true do
+                task.wait(1)
+                R.clockLabel.Text = os.date("%H:%M")
+        end
 end)
 
 -- Botón de configuración
@@ -470,22 +473,22 @@ creatorCorner.Parent = R.creatorButton
 
 -- Botón de administrador (solo visible para admins)
 if R.isAdmin then
-	R.adminPanelButton = Instance.new("TextButton")
-	R.adminPanelButton.Name = "AdminPanelButton"
-	R.adminPanelButton.Size = UDim2.new(0, 45, 0, 45)
-	R.adminPanelButton.Position = UDim2.new(1, -15, 0, 15)
-	R.adminPanelButton.AnchorPoint = Vector2.new(1, 0)
-	R.adminPanelButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
-	R.adminPanelButton.Text = "👑"
-	R.adminPanelButton.Font = Enum.Font.GothamBold
-	R.adminPanelButton.TextSize = 22
-	R.adminPanelButton.BorderSizePixel = 0
-	R.adminPanelButton.ZIndex = 5
-	R.adminPanelButton.Parent = R.mainFrame
+        R.adminPanelButton = Instance.new("TextButton")
+        R.adminPanelButton.Name = "AdminPanelButton"
+        R.adminPanelButton.Size = UDim2.new(0, 45, 0, 45)
+        R.adminPanelButton.Position = UDim2.new(1, -15, 0, 15)
+        R.adminPanelButton.AnchorPoint = Vector2.new(1, 0)
+        R.adminPanelButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
+        R.adminPanelButton.Text = "👑"
+        R.adminPanelButton.Font = Enum.Font.GothamBold
+        R.adminPanelButton.TextSize = 22
+        R.adminPanelButton.BorderSizePixel = 0
+        R.adminPanelButton.ZIndex = 5
+        R.adminPanelButton.Parent = R.mainFrame
 
-	local adminPanelCorner = Instance.new("UICorner")
-	adminPanelCorner.CornerRadius = UDim.new(1, 0)
-	adminPanelCorner.Parent = R.adminPanelButton
+        local adminPanelCorner = Instance.new("UICorner")
+        adminPanelCorner.CornerRadius = UDim.new(1, 0)
+        adminPanelCorner.Parent = R.adminPanelButton
 end
 
 -- ========== PANEL DE CREADOR (PANTALLA COMPLETA) ==========
@@ -709,314 +712,381 @@ R.creatorPanel.CanvasSize = UDim2.new(0, 0, 0, creatorLayout.AbsoluteContentSize
 
 -- ========== PANEL DE ADMINISTRADOR (solo para admins) ==========
 if R.isAdmin then
-	R.adminPanel = Instance.new("ScrollingFrame")
-	R.adminPanel.Name = "AdminPanel"
-	R.adminPanel.Size = UDim2.new(1, 0, 1, 0)
-	R.adminPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-	R.adminPanel.BorderSizePixel = 0
-	R.adminPanel.Visible = false
-	R.adminPanel.ZIndex = 10
-	R.adminPanel.ScrollBarThickness = 8
-	R.adminPanel.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
-	R.adminPanel.Parent = R.mainFrame
+        R.adminPanel = Instance.new("ScrollingFrame")
+        R.adminPanel.Name = "AdminPanel"
+        R.adminPanel.Size = UDim2.new(1, 0, 1, 0)
+        R.adminPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        R.adminPanel.BorderSizePixel = 0
+        R.adminPanel.Visible = false
+        R.adminPanel.ZIndex = 10
+        R.adminPanel.ScrollBarThickness = 8
+        R.adminPanel.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        R.adminPanel.Parent = R.mainFrame
 
-	local adminLayout = Instance.new("UIListLayout")
-	adminLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	adminLayout.Padding = UDim.new(0, 15)
-	adminLayout.Parent = R.adminPanel
+        local adminLayout = Instance.new("UIListLayout")
+        adminLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        adminLayout.Padding = UDim.new(0, 15)
+        adminLayout.Parent = R.adminPanel
 
-	local adminPadding = Instance.new("UIPadding")
-	adminPadding.PaddingLeft = UDim.new(0, 30)
-	adminPadding.PaddingRight = UDim.new(0, 30)
-	adminPadding.PaddingTop = UDim.new(0, 30)
-	adminPadding.PaddingBottom = UDim.new(0, 30)
-	adminPadding.Parent = R.adminPanel
+        local adminPadding = Instance.new("UIPadding")
+        adminPadding.PaddingLeft = UDim.new(0, 30)
+        adminPadding.PaddingRight = UDim.new(0, 30)
+        adminPadding.PaddingTop = UDim.new(0, 30)
+        adminPadding.PaddingBottom = UDim.new(0, 30)
+        adminPadding.Parent = R.adminPanel
 
-	-- Header del panel de admin
-	local adminHeaderContainer = Instance.new("Frame")
-	adminHeaderContainer.Size = UDim2.new(1, 0, 0, 60)
-	adminHeaderContainer.BackgroundTransparency = 1
-	adminHeaderContainer.LayoutOrder = 1
-	adminHeaderContainer.Parent = R.adminPanel
+        -- Header del panel de admin
+        local adminHeaderContainer = Instance.new("Frame")
+        adminHeaderContainer.Size = UDim2.new(1, 0, 0, 60)
+        adminHeaderContainer.BackgroundTransparency = 1
+        adminHeaderContainer.LayoutOrder = 1
+        adminHeaderContainer.Parent = R.adminPanel
 
-	local adminPanelTitle = Instance.new("TextLabel")
-	adminPanelTitle.Size = UDim2.new(1, -60, 1, 0)
-	adminPanelTitle.BackgroundTransparency = 1
-	adminPanelTitle.Text = "👑 PANEL"
-	adminPanelTitle.Font = Enum.Font.GothamBold
-	adminPanelTitle.TextSize = 28
-	adminPanelTitle.TextColor3 = Color3.fromRGB(234, 67, 53)
-	adminPanelTitle.TextXAlignment = Enum.TextXAlignment.Left
-	adminPanelTitle.ZIndex = 11
-	adminPanelTitle.Parent = adminHeaderContainer
+        local adminPanelTitle = Instance.new("TextLabel")
+        adminPanelTitle.Size = UDim2.new(1, -60, 1, 0)
+        adminPanelTitle.BackgroundTransparency = 1
+        adminPanelTitle.Text = "👑 PANEL"
+        adminPanelTitle.Font = Enum.Font.GothamBold
+        adminPanelTitle.TextSize = 28
+        adminPanelTitle.TextColor3 = Color3.fromRGB(234, 67, 53)
+        adminPanelTitle.TextXAlignment = Enum.TextXAlignment.Left
+        adminPanelTitle.ZIndex = 11
+        adminPanelTitle.Parent = adminHeaderContainer
 
-	R.adminCloseButton = Instance.new("TextButton")
-	R.adminCloseButton.Size = UDim2.new(0, 45, 0, 45)
-	R.adminCloseButton.Position = UDim2.new(1, 0, 0, 0)
-	R.adminCloseButton.AnchorPoint = Vector2.new(1, 0)
-	R.adminCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-	R.adminCloseButton.Text = "✕"
-	R.adminCloseButton.Font = Enum.Font.GothamBold
-	R.adminCloseButton.TextSize = 24
-	R.adminCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
-	R.adminCloseButton.BorderSizePixel = 0
-	R.adminCloseButton.ZIndex = 11
-	R.adminCloseButton.Parent = adminHeaderContainer
+        R.adminCloseButton = Instance.new("TextButton")
+        R.adminCloseButton.Size = UDim2.new(0, 45, 0, 45)
+        R.adminCloseButton.Position = UDim2.new(1, 0, 0, 0)
+        R.adminCloseButton.AnchorPoint = Vector2.new(1, 0)
+        R.adminCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+        R.adminCloseButton.Text = "✕"
+        R.adminCloseButton.Font = Enum.Font.GothamBold
+        R.adminCloseButton.TextSize = 24
+        R.adminCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
+        R.adminCloseButton.BorderSizePixel = 0
+        R.adminCloseButton.ZIndex = 11
+        R.adminCloseButton.Parent = adminHeaderContainer
 
-	local adminCloseCorner = Instance.new("UICorner")
-	adminCloseCorner.CornerRadius = UDim.new(1, 0)
-	adminCloseCorner.Parent = R.adminCloseButton
+        local adminCloseCorner = Instance.new("UICorner")
+        adminCloseCorner.CornerRadius = UDim.new(1, 0)
+        adminCloseCorner.Parent = R.adminCloseButton
 
-	-- Sección: Buscar y Verificar Usuarios
-	local userManagementTitle = Instance.new("TextLabel")
-	userManagementTitle.Size = UDim2.new(1, 0, 0, 30)
-	userManagementTitle.BackgroundTransparency = 1
-	userManagementTitle.Text = "👥 Gestión de Usuarios"
-	userManagementTitle.Font = Enum.Font.GothamBold
-	userManagementTitle.TextSize = 22
-	userManagementTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
-	userManagementTitle.TextXAlignment = Enum.TextXAlignment.Left
-	userManagementTitle.LayoutOrder = 2
-	userManagementTitle.ZIndex = 11
-	userManagementTitle.Parent = R.adminPanel
+        -- Sección: Buscar y Verificar Usuarios
+        local userManagementTitle = Instance.new("TextLabel")
+        userManagementTitle.Size = UDim2.new(1, 0, 0, 30)
+        userManagementTitle.BackgroundTransparency = 1
+        userManagementTitle.Text = "👥 Gestión de Usuarios"
+        userManagementTitle.Font = Enum.Font.GothamBold
+        userManagementTitle.TextSize = 22
+        userManagementTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
+        userManagementTitle.TextXAlignment = Enum.TextXAlignment.Left
+        userManagementTitle.LayoutOrder = 2
+        userManagementTitle.ZIndex = 11
+        userManagementTitle.Parent = R.adminPanel
 
-	-- Barra de búsqueda de usuarios
-	local userSearchContainer = Instance.new("Frame")
-	userSearchContainer.Size = UDim2.new(1, 0, 0, 50)
-	userSearchContainer.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-	userSearchContainer.BorderSizePixel = 0
-	userSearchContainer.LayoutOrder = 3
-	userSearchContainer.ZIndex = 11
-	userSearchContainer.Parent = R.adminPanel
+        -- Barra de búsqueda de usuarios
+        local userSearchContainer = Instance.new("Frame")
+        userSearchContainer.Size = UDim2.new(1, 0, 0, 50)
+        userSearchContainer.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        userSearchContainer.BorderSizePixel = 0
+        userSearchContainer.LayoutOrder = 3
+        userSearchContainer.ZIndex = 11
+        userSearchContainer.Parent = R.adminPanel
 
-	local userSearchCorner = Instance.new("UICorner")
-	userSearchCorner.CornerRadius = UDim.new(0, 10)
-	userSearchCorner.Parent = userSearchContainer
+        local userSearchCorner = Instance.new("UICorner")
+        userSearchCorner.CornerRadius = UDim.new(0, 10)
+        userSearchCorner.Parent = userSearchContainer
 
-	local userSearchLayout = Instance.new("UIListLayout")
-	userSearchLayout.FillDirection = Enum.FillDirection.Horizontal
-	userSearchLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	userSearchLayout.Padding = UDim.new(0, 10)
-	userSearchLayout.Parent = userSearchContainer
+        local userSearchLayout = Instance.new("UIListLayout")
+        userSearchLayout.FillDirection = Enum.FillDirection.Horizontal
+        userSearchLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+        userSearchLayout.Padding = UDim.new(0, 10)
+        userSearchLayout.Parent = userSearchContainer
 
-	local userSearchPadding = Instance.new("UIPadding")
-	userSearchPadding.PaddingLeft = UDim.new(0, 15)
-	userSearchPadding.PaddingRight = UDim.new(0, 15)
-	userSearchPadding.Parent = userSearchContainer
+        local userSearchPadding = Instance.new("UIPadding")
+        userSearchPadding.PaddingLeft = UDim.new(0, 15)
+        userSearchPadding.PaddingRight = UDim.new(0, 15)
+        userSearchPadding.Parent = userSearchContainer
 
-	local userSearchIcon = Instance.new("TextLabel")
-	userSearchIcon.Size = UDim2.new(0, 30, 0, 30)
-	userSearchIcon.BackgroundTransparency = 1
-	userSearchIcon.Text = "🔍"
-	userSearchIcon.TextSize = 20
-	userSearchIcon.ZIndex = 12
-	userSearchIcon.Parent = userSearchContainer
+        local userSearchIcon = Instance.new("TextLabel")
+        userSearchIcon.Size = UDim2.new(0, 30, 0, 30)
+        userSearchIcon.BackgroundTransparency = 1
+        userSearchIcon.Text = "🔍"
+        userSearchIcon.TextSize = 20
+        userSearchIcon.ZIndex = 12
+        userSearchIcon.Parent = userSearchContainer
 
-	R.adminSearchBox = Instance.new("TextBox")
-	R.adminSearchBox.Name = "AdminSearchBox"
-	R.adminSearchBox.Size = UDim2.new(1, -50, 1, 0)
-	R.adminSearchBox.BackgroundTransparency = 1
-	R.adminSearchBox.Text = ""
-	R.adminSearchBox.PlaceholderText = "Buscar usuario por nombre..."
-	R.adminSearchBox.Font = Enum.Font.Gotham
-	R.adminSearchBox.TextSize = 18
-	R.adminSearchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
-	R.adminSearchBox.TextXAlignment = Enum.TextXAlignment.Left
-	R.adminSearchBox.ClearTextOnFocus = false
-	R.adminSearchBox.ZIndex = 12
-	R.adminSearchBox.Parent = userSearchContainer
+        R.adminSearchBox = Instance.new("TextBox")
+        R.adminSearchBox.Name = "AdminSearchBox"
+        R.adminSearchBox.Size = UDim2.new(1, -50, 1, 0)
+        R.adminSearchBox.BackgroundTransparency = 1
+        R.adminSearchBox.Text = ""
+        R.adminSearchBox.PlaceholderText = "Buscar usuario por nombre..."
+        R.adminSearchBox.Font = Enum.Font.Gotham
+        R.adminSearchBox.TextSize = 18
+        R.adminSearchBox.TextColor3 = Color3.fromRGB(0, 0, 0)
+        R.adminSearchBox.TextXAlignment = Enum.TextXAlignment.Left
+        R.adminSearchBox.ClearTextOnFocus = false
+        R.adminSearchBox.ZIndex = 12
+        R.adminSearchBox.Parent = userSearchContainer
 
-	-- Contenedor de resultados de búsqueda de usuarios
-	R.adminScrollContainer = Instance.new("ScrollingFrame")
-	R.adminScrollContainer.Name = "AdminScrollContainer"
-	R.adminScrollContainer.Size = UDim2.new(1, 0, 0, 250)
-	R.adminScrollContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
-	R.adminScrollContainer.BorderSizePixel = 0
-	R.adminScrollContainer.ScrollBarThickness = 6
-	R.adminScrollContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
-	R.adminScrollContainer.LayoutOrder = 4
-	R.adminScrollContainer.ZIndex = 11
-	R.adminScrollContainer.Parent = R.adminPanel
+        -- Contenedor de resultados de búsqueda de usuarios
+        R.adminScrollContainer = Instance.new("ScrollingFrame")
+        R.adminScrollContainer.Name = "AdminScrollContainer"
+        R.adminScrollContainer.Size = UDim2.new(1, 0, 0, 250)
+        R.adminScrollContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+        R.adminScrollContainer.BorderSizePixel = 0
+        R.adminScrollContainer.ScrollBarThickness = 6
+        R.adminScrollContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        R.adminScrollContainer.LayoutOrder = 4
+        R.adminScrollContainer.ZIndex = 11
+        R.adminScrollContainer.Parent = R.adminPanel
 
-	local adminScrollCorner = Instance.new("UICorner")
-	adminScrollCorner.CornerRadius = UDim.new(0, 10)
-	adminScrollCorner.Parent = R.adminScrollContainer
+        local adminScrollCorner = Instance.new("UICorner")
+        adminScrollCorner.CornerRadius = UDim.new(0, 10)
+        adminScrollCorner.Parent = R.adminScrollContainer
 
-	local adminScrollLayout = Instance.new("UIListLayout")
-	adminScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	adminScrollLayout.Padding = UDim.new(0, 10)
-	adminScrollLayout.Parent = R.adminScrollContainer
+        local adminScrollLayout = Instance.new("UIListLayout")
+        adminScrollLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        adminScrollLayout.Padding = UDim.new(0, 10)
+        adminScrollLayout.Parent = R.adminScrollContainer
 
-	local adminScrollPadding = Instance.new("UIPadding")
-	adminScrollPadding.PaddingLeft = UDim.new(0, 15)
-	adminScrollPadding.PaddingRight = UDim.new(0, 15)
-	adminScrollPadding.PaddingTop = UDim.new(0, 15)
-	adminScrollPadding.PaddingBottom = UDim.new(0, 15)
-	adminScrollPadding.Parent = R.adminScrollContainer
+        local adminScrollPadding = Instance.new("UIPadding")
+        adminScrollPadding.PaddingLeft = UDim.new(0, 15)
+        adminScrollPadding.PaddingRight = UDim.new(0, 15)
+        adminScrollPadding.PaddingTop = UDim.new(0, 15)
+        adminScrollPadding.PaddingBottom = UDim.new(0, 15)
+        adminScrollPadding.Parent = R.adminScrollContainer
 
-	-- Separador
-	local separator1 = Instance.new("Frame")
-	separator1.Size = UDim2.new(1, 0, 0, 2)
-	separator1.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-	separator1.BorderSizePixel = 0
-	separator1.LayoutOrder = 5
-	separator1.ZIndex = 11
-	separator1.Parent = R.adminPanel
+        -- Separador
+        local separator1 = Instance.new("Frame")
+        separator1.Size = UDim2.new(1, 0, 0, 2)
+        separator1.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+        separator1.BorderSizePixel = 0
+        separator1.LayoutOrder = 5
+        separator1.ZIndex = 11
+        separator1.Parent = R.adminPanel
 
-	-- Sección: Gestión de Artículos
-	local articlesManagementTitle = Instance.new("TextLabel")
-	articlesManagementTitle.Size = UDim2.new(1, 0, 0, 30)
-	articlesManagementTitle.BackgroundTransparency = 1
-	articlesManagementTitle.Text = "📋 Gestión de Artículos"
-	articlesManagementTitle.Font = Enum.Font.GothamBold
-	articlesManagementTitle.TextSize = 22
-	articlesManagementTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
-	articlesManagementTitle.TextXAlignment = Enum.TextXAlignment.Left
-	articlesManagementTitle.LayoutOrder = 6
-	articlesManagementTitle.ZIndex = 11
-	articlesManagementTitle.Parent = R.adminPanel
+        -- Sección: Gestión de Artículos
+        local articlesManagementTitle = Instance.new("TextLabel")
+        articlesManagementTitle.Size = UDim2.new(1, 0, 0, 30)
+        articlesManagementTitle.BackgroundTransparency = 1
+        articlesManagementTitle.Text = "📋 Gestión de Artículos"
+        articlesManagementTitle.Font = Enum.Font.GothamBold
+        articlesManagementTitle.TextSize = 22
+        articlesManagementTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
+        articlesManagementTitle.TextXAlignment = Enum.TextXAlignment.Left
+        articlesManagementTitle.LayoutOrder = 6
+        articlesManagementTitle.ZIndex = 11
+        articlesManagementTitle.Parent = R.adminPanel
 
-	-- Botón actualizar
-	R.refreshButton = Instance.new("TextButton")
-	R.refreshButton.Size = UDim2.new(1, 0, 0, 45)
-	R.refreshButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
-	R.refreshButton.Text = "🔄 Actualizar Artículos"
-	R.refreshButton.Font = Enum.Font.GothamBold
-	R.refreshButton.TextSize = 18
-	R.refreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	R.refreshButton.BorderSizePixel = 0
-	R.refreshButton.LayoutOrder = 7
-	R.refreshButton.ZIndex = 11
-	R.refreshButton.Parent = R.adminPanel
+        -- Botón actualizar
+        R.refreshButton = Instance.new("TextButton")
+        R.refreshButton.Size = UDim2.new(1, 0, 0, 45)
+        R.refreshButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+        R.refreshButton.Text = "🔄 Actualizar Artículos"
+        R.refreshButton.Font = Enum.Font.GothamBold
+        R.refreshButton.TextSize = 18
+        R.refreshButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        R.refreshButton.BorderSizePixel = 0
+        R.refreshButton.LayoutOrder = 7
+        R.refreshButton.ZIndex = 11
+        R.refreshButton.Parent = R.adminPanel
 
-	local refreshCorner = Instance.new("UICorner")
-	refreshCorner.CornerRadius = UDim.new(0, 10)
-	refreshCorner.Parent = R.refreshButton
+        local refreshCorner = Instance.new("UICorner")
+        refreshCorner.CornerRadius = UDim.new(0, 10)
+        refreshCorner.Parent = R.refreshButton
 
-	-- Contenedor de todos los artículos
-	R.allArticlesContainer = Instance.new("ScrollingFrame")
-	R.allArticlesContainer.Name = "AllArticlesContainer"
-	R.allArticlesContainer.Size = UDim2.new(1, 0, 0, 400)
-	R.allArticlesContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
-	R.allArticlesContainer.BorderSizePixel = 0
-	R.allArticlesContainer.ScrollBarThickness = 6
-	R.allArticlesContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
-	R.allArticlesContainer.LayoutOrder = 8
-	R.allArticlesContainer.ZIndex = 11
-	R.allArticlesContainer.Parent = R.adminPanel
+        -- Contenedor de todos los artículos
+        R.allArticlesContainer = Instance.new("ScrollingFrame")
+        R.allArticlesContainer.Name = "AllArticlesContainer"
+        R.allArticlesContainer.Size = UDim2.new(1, 0, 0, 400)
+        R.allArticlesContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+        R.allArticlesContainer.BorderSizePixel = 0
+        R.allArticlesContainer.ScrollBarThickness = 6
+        R.allArticlesContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        R.allArticlesContainer.LayoutOrder = 8
+        R.allArticlesContainer.ZIndex = 11
+        R.allArticlesContainer.Parent = R.adminPanel
 
-	local allArticlesCorner = Instance.new("UICorner")
-	allArticlesCorner.CornerRadius = UDim.new(0, 10)
-	allArticlesCorner.Parent = R.allArticlesContainer
+        local allArticlesCorner = Instance.new("UICorner")
+        allArticlesCorner.CornerRadius = UDim.new(0, 10)
+        allArticlesCorner.Parent = R.allArticlesContainer
 
-	local allArticlesLayout = Instance.new("UIListLayout")
-	allArticlesLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	allArticlesLayout.Padding = UDim.new(0, 10)
-	allArticlesLayout.Parent = R.allArticlesContainer
+        local allArticlesLayout = Instance.new("UIListLayout")
+        allArticlesLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        allArticlesLayout.Padding = UDim.new(0, 10)
+        allArticlesLayout.Parent = R.allArticlesContainer
 
-	local allArticlesPadding = Instance.new("UIPadding")
-	allArticlesPadding.PaddingLeft = UDim.new(0, 15)
-	allArticlesPadding.PaddingRight = UDim.new(0, 15)
-	allArticlesPadding.PaddingTop = UDim.new(0, 15)
-	allArticlesPadding.PaddingBottom = UDim.new(0, 15)
-	allArticlesPadding.Parent = R.allArticlesContainer
+        local allArticlesPadding = Instance.new("UIPadding")
+        allArticlesPadding.PaddingLeft = UDim.new(0, 15)
+        allArticlesPadding.PaddingRight = UDim.new(0, 15)
+        allArticlesPadding.PaddingTop = UDim.new(0, 15)
+        allArticlesPadding.PaddingBottom = UDim.new(0, 15)
+        allArticlesPadding.Parent = R.allArticlesContainer
 
-	-- Separador
-	local separator2 = Instance.new("Frame")
-	separator2.Size = UDim2.new(1, 0, 0, 2)
-	separator2.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
-	separator2.BorderSizePixel = 0
-	separator2.LayoutOrder = 9
-	separator2.ZIndex = 11
-	separator2.Parent = R.adminPanel
+        -- Separador
+        local separator2 = Instance.new("Frame")
+        separator2.Size = UDim2.new(1, 0, 0, 2)
+        separator2.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+        separator2.BorderSizePixel = 0
+        separator2.LayoutOrder = 9
+        separator2.ZIndex = 11
+        separator2.Parent = R.adminPanel
 
-	-- Sección: Publicar como Sistema
-	local systemTitle = Instance.new("TextLabel")
-	systemTitle.Size = UDim2.new(1, 0, 0, 30)
-	systemTitle.BackgroundTransparency = 1
-	systemTitle.Text = "📢 Publicar Anuncio del Sistema"
-	systemTitle.Font = Enum.Font.GothamBold
-	systemTitle.TextSize = 22
-	systemTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
-	systemTitle.TextXAlignment = Enum.TextXAlignment.Left
-	systemTitle.LayoutOrder = 10
-	systemTitle.ZIndex = 11
-	systemTitle.Parent = R.adminPanel
+        -- Sección: Publicar como Sistema
+        local systemTitle = Instance.new("TextLabel")
+        systemTitle.Size = UDim2.new(1, 0, 0, 30)
+        systemTitle.BackgroundTransparency = 1
+        systemTitle.Text = "📢 Publicar Anuncio del Sistema"
+        systemTitle.Font = Enum.Font.GothamBold
+        systemTitle.TextSize = 22
+        systemTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
+        systemTitle.TextXAlignment = Enum.TextXAlignment.Left
+        systemTitle.LayoutOrder = 10
+        systemTitle.ZIndex = 11
+        systemTitle.Parent = R.adminPanel
 
-	-- Campo título del sistema
-	R.systemTitleInput = Instance.new("TextBox")
-	R.systemTitleInput.Name = "SystemTitleInput"
-	R.systemTitleInput.Size = UDim2.new(1, 0, 0, 50)
-	R.systemTitleInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-	R.systemTitleInput.Text = ""
-	R.systemTitleInput.PlaceholderText = "Título del anuncio..."
-	R.systemTitleInput.Font = Enum.Font.Gotham
-	R.systemTitleInput.TextSize = 18
-	R.systemTitleInput.TextColor3 = Color3.fromRGB(0, 0, 0)
-	R.systemTitleInput.TextXAlignment = Enum.TextXAlignment.Left
-	R.systemTitleInput.ClearTextOnFocus = false
-	R.systemTitleInput.BorderSizePixel = 0
-	R.systemTitleInput.LayoutOrder = 11
-	R.systemTitleInput.ZIndex = 11
-	R.systemTitleInput.Parent = R.adminPanel
+        -- Campo título del sistema
+        R.systemTitleInput = Instance.new("TextBox")
+        R.systemTitleInput.Name = "SystemTitleInput"
+        R.systemTitleInput.Size = UDim2.new(1, 0, 0, 50)
+        R.systemTitleInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        R.systemTitleInput.Text = ""
+        R.systemTitleInput.PlaceholderText = "Título del anuncio..."
+        R.systemTitleInput.Font = Enum.Font.Gotham
+        R.systemTitleInput.TextSize = 18
+        R.systemTitleInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+        R.systemTitleInput.TextXAlignment = Enum.TextXAlignment.Left
+        R.systemTitleInput.ClearTextOnFocus = false
+        R.systemTitleInput.BorderSizePixel = 0
+        R.systemTitleInput.LayoutOrder = 11
+        R.systemTitleInput.ZIndex = 11
+        R.systemTitleInput.Parent = R.adminPanel
 
-	local systemTitleCorner = Instance.new("UICorner")
-	systemTitleCorner.CornerRadius = UDim.new(0, 10)
-	systemTitleCorner.Parent = R.systemTitleInput
+        local systemTitleCorner = Instance.new("UICorner")
+        systemTitleCorner.CornerRadius = UDim.new(0, 10)
+        systemTitleCorner.Parent = R.systemTitleInput
 
-	local systemTitlePadding = Instance.new("UIPadding")
-	systemTitlePadding.PaddingLeft = UDim.new(0, 15)
-	systemTitlePadding.PaddingRight = UDim.new(0, 15)
-	systemTitlePadding.Parent = R.systemTitleInput
+        local systemTitlePadding = Instance.new("UIPadding")
+        systemTitlePadding.PaddingLeft = UDim.new(0, 15)
+        systemTitlePadding.PaddingRight = UDim.new(0, 15)
+        systemTitlePadding.Parent = R.systemTitleInput
 
-	-- Campo contenido del sistema
-	R.systemContentInput = Instance.new("TextBox")
-	R.systemContentInput.Name = "SystemContentInput"
-	R.systemContentInput.Size = UDim2.new(1, 0, 0, 150)
-	R.systemContentInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
-	R.systemContentInput.Text = ""
-	R.systemContentInput.PlaceholderText = "Contenido del anuncio..."
-	R.systemContentInput.Font = Enum.Font.Gotham
-	R.systemContentInput.TextSize = 16
-	R.systemContentInput.TextColor3 = Color3.fromRGB(0, 0, 0)
-	R.systemContentInput.TextXAlignment = Enum.TextXAlignment.Left
-	R.systemContentInput.TextYAlignment = Enum.TextYAlignment.Top
-	R.systemContentInput.ClearTextOnFocus = false
-	R.systemContentInput.MultiLine = true
-	R.systemContentInput.TextWrapped = true
-	R.systemContentInput.BorderSizePixel = 0
-	R.systemContentInput.LayoutOrder = 12
-	R.systemContentInput.ZIndex = 11
-	R.systemContentInput.Parent = R.adminPanel
+        -- Campo contenido del sistema
+        R.systemContentInput = Instance.new("TextBox")
+        R.systemContentInput.Name = "SystemContentInput"
+        R.systemContentInput.Size = UDim2.new(1, 0, 0, 150)
+        R.systemContentInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+        R.systemContentInput.Text = ""
+        R.systemContentInput.PlaceholderText = "Contenido del anuncio..."
+        R.systemContentInput.Font = Enum.Font.Gotham
+        R.systemContentInput.TextSize = 16
+        R.systemContentInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+        R.systemContentInput.TextXAlignment = Enum.TextXAlignment.Left
+        R.systemContentInput.TextYAlignment = Enum.TextYAlignment.Top
+        R.systemContentInput.ClearTextOnFocus = false
+        R.systemContentInput.MultiLine = true
+        R.systemContentInput.TextWrapped = true
+        R.systemContentInput.BorderSizePixel = 0
+        R.systemContentInput.LayoutOrder = 12
+        R.systemContentInput.ZIndex = 11
+        R.systemContentInput.Parent = R.adminPanel
 
-	local systemContentCorner = Instance.new("UICorner")
-	systemContentCorner.CornerRadius = UDim.new(0, 10)
-	systemContentCorner.Parent = R.systemContentInput
+        local systemContentCorner = Instance.new("UICorner")
+        systemContentCorner.CornerRadius = UDim.new(0, 10)
+        systemContentCorner.Parent = R.systemContentInput
 
-	local systemContentPadding = Instance.new("UIPadding")
-	systemContentPadding.PaddingLeft = UDim.new(0, 15)
-	systemContentPadding.PaddingTop = UDim.new(0, 15)
-	systemContentPadding.PaddingRight = UDim.new(0, 15)
-	systemContentPadding.PaddingBottom = UDim.new(0, 15)
-	systemContentPadding.Parent = R.systemContentInput
+        local systemContentPadding = Instance.new("UIPadding")
+        systemContentPadding.PaddingLeft = UDim.new(0, 15)
+        systemContentPadding.PaddingTop = UDim.new(0, 15)
+        systemContentPadding.PaddingRight = UDim.new(0, 15)
+        systemContentPadding.PaddingBottom = UDim.new(0, 15)
+        systemContentPadding.Parent = R.systemContentInput
 
-	-- Botón publicar como sistema
-	R.systemPublishButton = Instance.new("TextButton")
-	R.systemPublishButton.Name = "SystemPublishButton"
-	R.systemPublishButton.Size = UDim2.new(1, 0, 0, 50)
-	R.systemPublishButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
-	R.systemPublishButton.Text = "📢 Publicar como Sistema"
-	R.systemPublishButton.Font = Enum.Font.GothamBold
-	R.systemPublishButton.TextSize = 18
-	R.systemPublishButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-	R.systemPublishButton.BorderSizePixel = 0
-	R.systemPublishButton.LayoutOrder = 13
-	R.systemPublishButton.ZIndex = 11
-	R.systemPublishButton.Parent = R.adminPanel
+        -- Botón publicar como sistema
+        R.systemPublishButton = Instance.new("TextButton")
+        R.systemPublishButton.Name = "SystemPublishButton"
+        R.systemPublishButton.Size = UDim2.new(1, 0, 0, 50)
+        R.systemPublishButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
+        R.systemPublishButton.Text = "📢 Publicar como Sistema"
+        R.systemPublishButton.Font = Enum.Font.GothamBold
+        R.systemPublishButton.TextSize = 18
+        R.systemPublishButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        R.systemPublishButton.BorderSizePixel = 0
+        R.systemPublishButton.LayoutOrder = 13
+        R.systemPublishButton.ZIndex = 11
+        R.systemPublishButton.Parent = R.adminPanel
 
-	local systemPublishCorner = Instance.new("UICorner")
-	systemPublishCorner.CornerRadius = UDim.new(0, 10)
-	systemPublishCorner.Parent = R.systemPublishButton
+        local systemPublishCorner = Instance.new("UICorner")
+        systemPublishCorner.CornerRadius = UDim.new(0, 10)
+        systemPublishCorner.Parent = R.systemPublishButton
+
+        -- Separador
+        local separator3 = Instance.new("Frame")
+        separator3.Size = UDim2.new(1, 0, 0, 2)
+        separator3.BackgroundColor3 = Color3.fromRGB(220, 220, 220)
+        separator3.BorderSizePixel = 0
+        separator3.LayoutOrder = 14
+        separator3.ZIndex = 11
+        separator3.Parent = R.adminPanel
+
+        -- Sección: Gestión de Música
+        local musicManagementTitle = Instance.new("TextLabel")
+        musicManagementTitle.Size = UDim2.new(1, 0, 0, 30)
+        musicManagementTitle.BackgroundTransparency = 1
+        musicManagementTitle.Text = "🎵 Gestión de Música"
+        musicManagementTitle.Font = Enum.Font.GothamBold
+        musicManagementTitle.TextSize = 22
+        musicManagementTitle.TextColor3 = Color3.fromRGB(50, 50, 50)
+        musicManagementTitle.TextXAlignment = Enum.TextXAlignment.Left
+        musicManagementTitle.LayoutOrder = 15
+        musicManagementTitle.ZIndex = 11
+        musicManagementTitle.Parent = R.adminPanel
+
+        -- Botón actualizar música
+        R.refreshMusicButton = Instance.new("TextButton")
+        R.refreshMusicButton.Size = UDim2.new(1, 0, 0, 45)
+        R.refreshMusicButton.BackgroundColor3 = Color3.fromRGB(255, 87, 34)
+        R.refreshMusicButton.Text = "🔄 Actualizar Música"
+        R.refreshMusicButton.Font = Enum.Font.GothamBold
+        R.refreshMusicButton.TextSize = 18
+        R.refreshMusicButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        R.refreshMusicButton.BorderSizePixel = 0
+        R.refreshMusicButton.LayoutOrder = 16
+        R.refreshMusicButton.ZIndex = 11
+        R.refreshMusicButton.Parent = R.adminPanel
+
+        local refreshMusicCorner = Instance.new("UICorner")
+        refreshMusicCorner.CornerRadius = UDim.new(0, 10)
+        refreshMusicCorner.Parent = R.refreshMusicButton
+
+        -- Contenedor de todas las músicas
+        R.allMusicContainer = Instance.new("ScrollingFrame")
+        R.allMusicContainer.Name = "AllMusicContainer"
+        R.allMusicContainer.Size = UDim2.new(1, 0, 0, 300)
+        R.allMusicContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+        R.allMusicContainer.BorderSizePixel = 0
+        R.allMusicContainer.ScrollBarThickness = 6
+        R.allMusicContainer.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        R.allMusicContainer.LayoutOrder = 17
+        R.allMusicContainer.ZIndex = 11
+        R.allMusicContainer.Parent = R.adminPanel
+
+        local allMusicCorner = Instance.new("UICorner")
+        allMusicCorner.CornerRadius = UDim.new(0, 10)
+        allMusicCorner.Parent = R.allMusicContainer
+
+        local allMusicLayout = Instance.new("UIListLayout")
+        allMusicLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        allMusicLayout.Padding = UDim.new(0, 10)
+        allMusicLayout.Parent = R.allMusicContainer
+
+        local allMusicPadding = Instance.new("UIPadding")
+        allMusicPadding.PaddingLeft = UDim.new(0, 15)
+        allMusicPadding.PaddingRight = UDim.new(0, 15)
+        allMusicPadding.PaddingTop = UDim.new(0, 15)
+        allMusicPadding.PaddingBottom = UDim.new(0, 15)
+        allMusicPadding.Parent = R.allMusicContainer
 end
 
 -- ========== PANEL DE CONFIGURACIÓN ==========
@@ -1123,14 +1193,14 @@ versionNumber.Parent = versionContainer
 
 -- Detectar versión automáticamente
 task.spawn(function()
-	local success, placeVersion = pcall(function()
-		return game.PlaceVersion
-	end)
-	if success then
-		versionNumber.Text = "v" .. tostring(placeVersion)
-	else
-		versionNumber.Text = "v1.0.0"
-	end
+        local success, placeVersion = pcall(function()
+                return game.PlaceVersion
+        end)
+        if success then
+                versionNumber.Text = "v" .. tostring(placeVersion)
+        else
+                versionNumber.Text = "v1.0.0"
+        end
 end)
 
 -- Derechos reservados

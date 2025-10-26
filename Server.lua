@@ -165,6 +165,10 @@ local checkBanStatusEvent = createRemote("CheckBanStatus", "RemoteFunction")
 local banUserEvent = createRemote("BanUser", "RemoteFunction")
 local unbanUserEvent = createRemote("UnbanUser", "RemoteFunction")
 local processUnbanPaymentEvent = createRemote("ProcessUnbanPayment", "RemoteFunction")
+local publishMusicFunction = createRemote("PublishMusic", "RemoteFunction")
+local getMusicEvent = createRemote("GetMusic", "RemoteFunction")
+local getPendingMusicEvent = createRemote("GetPendingMusic", "RemoteFunction")
+local toggleMusicStatusEvent = createRemote("ToggleMusicStatus", "RemoteFunction")
  
 -- FUNCIONES DEL SERVIDOR
  
@@ -781,49 +785,56 @@ Players.PlayerAdded:Connect(function(player)
     if isBanned then
         local daysLeft = math.ceil((banInfo.banEndTime - os.time()) / 86400)
         
-        -- PRIMERO mostrar opción de pago
-        task.wait(1)
-        
-        -- Intentar mostrar prompt de pago
-        if UNBAN_PRODUCT_ID ~= 0 and UNBAN_PRODUCT_ID ~= 3440708349 then
-            local success = pcall(function()
+        -- PRIMERO mostrar opción de pago si el producto está configurado
+        if UNBAN_PRODUCT_ID ~= 0 then
+            task.wait(1)
+            
+            local success, error = pcall(function()
                 MarketplaceService:PromptProductPurchase(player, UNBAN_PRODUCT_ID)
             end)
             
             if success then
-                print(string.format("[BANEO] Mostrando opción de pago a %s", player.Name))
+                print(string.format("[BANEO] Mostrando opción de pago a %s (Producto ID: %d)", player.Name, UNBAN_PRODUCT_ID))
                 -- Esperar un momento para que el usuario pueda comprar
-                task.wait(3)
+                task.wait(5)
                 
                 -- Verificar si sigue baneado después del intento de pago
                 local stillBanned = isUserBanned(player.UserId)
                 if stillBanned then
                     local message = string.format(
-                    "HAS SIDO BLOQUEADO\n\n" ..
+                    "🚫 HAS SIDO BLOQUEADO 🚫\n\n" ..
                     "Tu cuenta ha sido suspendida por el equipo de Glam.\n\n" ..
-                    "Razón: %s\n\n" ..
-                    "No podrás acceder al juego hasta dentro de %d días.\n\n" ..
-                    "Puedes pagar 100 Robux para ser desbloqueado inmediatamente.",
+                    "📋 Razón: %s\n\n" ..
+                    "⏰ No podrás acceder al juego hasta dentro de %d días.\n\n" ..
+                    "💰 Si deseas ser desbloqueado inmediatamente,\n" ..
+                    "puedes pagar 100 Robux al volver a unirte.",
                     banInfo.reason,
                     daysLeft
                     )
                     player:Kick(message)
                     return
+                else
+                    -- Usuario pagó y fue desbaneado
+                    print(string.format("[PAGO EXITOSO] Usuario desbaneado: %s", player.Name))
+                    return
                 end
+            else
+                warn(string.format("[ERROR] No se pudo mostrar prompt de pago: %s", tostring(error)))
             end
-        else
-            -- Si no hay producto configurado, kickear directamente
-            local message = string.format(
-            "HAS SIDO BLOQUEADO\n\n" ..
-            "Tu cuenta ha sido suspendida.\n\n" ..
-            "Razón: %s\n\n" ..
-            "Duración: %d días",
-            banInfo.reason,
-            daysLeft
-            )
-            player:Kick(message)
-            return
         end
+        
+        -- Si no hay producto configurado o hubo error, kickear con mensaje simple
+        local message = string.format(
+        "🚫 HAS SIDO BLOQUEADO 🚫\n\n" ..
+        "Tu cuenta ha sido suspendida.\n\n" ..
+        "📋 Razón: %s\n\n" ..
+        "⏰ Duración: %d días\n\n" ..
+        "Contacta a un administrador si crees que esto es un error.",
+        banInfo.reason,
+        daysLeft
+        )
+        player:Kick(message)
+        return
     end
     
     -- Registrar automáticamente al usuario en la base de datos
@@ -884,12 +895,6 @@ local function saveMusicData()
         musicDataStore:SetAsync("music", musicDatabase)
     end)
 end
- 
--- Crear remotes de música
-local publishMusicFunction = createRemote("PublishMusic", "RemoteFunction")
-local getMusicEvent = createRemote("GetMusic", "RemoteFunction")
-local getPendingMusicEvent = createRemote("GetPendingMusic", "RemoteFunction")
-local toggleMusicStatusEvent = createRemote("ToggleMusicStatus", "RemoteFunction")
  
 -- Publicar música
 publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category)
