@@ -49,6 +49,10 @@ local searchUsersEvent = remoteFolder:WaitForChild("SearchUsers", 5)
 local verifyUserEvent = remoteFolder:WaitForChild("VerifyUser", 5)
 local unverifyUserEvent = remoteFolder:WaitForChild("UnverifyUser", 5)
 local getRobloxStatsEvent = remoteFolder:WaitForChild("GetRobloxStats", 5)
+local checkBanStatusEvent = remoteFolder:WaitForChild("CheckBanStatus", 5)
+local banUserEvent = remoteFolder:WaitForChild("BanUser", 5)
+local unbanUserEvent = remoteFolder:WaitForChild("UnbanUser", 5)
+local processUnbanPaymentEvent = remoteFolder:WaitForChild("ProcessUnbanPayment", 5)
 
 if not (getArticlesEvent and publishArticleFunction and checkAdminEvent and getArticleByIdEvent) then
     warn("❌ ERROR: No se pudieron cargar todos los RemoteEvents")
@@ -86,14 +90,14 @@ mainFrame.Parent = screenGui
 -- ========== VISTA DE INICIO ==========
 local centerContainer = Instance.new("Frame")
 centerContainer.Size = UDim2.new(0.6, 0, 0, 150)
-centerContainer.Position = UDim2.new(0.5, 0, 0.35, 0)
+centerContainer.Position = UDim2.new(0.5, 0, 0.22, 0)
 centerContainer.AnchorPoint = Vector2.new(0.5, 0.5)
 centerContainer.BackgroundTransparency = 1
 centerContainer.Parent = mainFrame
 
 local centerLayout = Instance.new("UIListLayout")
 centerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-centerLayout.Padding = UDim.new(0, 15)
+centerLayout.Padding = UDim.new(0, 20)
 centerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 centerLayout.Parent = centerContainer
 
@@ -164,8 +168,8 @@ searchButton.Parent = searchContainer
 -- ========== SECCIONES DE ARTÍCULOS EN INICIO ==========
 local homeSectionsContainer = Instance.new("ScrollingFrame")
 homeSectionsContainer.Name = "HomeSectionsContainer"
-homeSectionsContainer.Size = UDim2.new(0.9, 0, 0.5, 0)
-homeSectionsContainer.Position = UDim2.new(0.5, 0, 0.6, 0)
+homeSectionsContainer.Size = UDim2.new(0.9, 0, 0.55, 0)
+homeSectionsContainer.Position = UDim2.new(0.5, 0, 0.43, 0)
 homeSectionsContainer.AnchorPoint = Vector2.new(0.5, 0)
 homeSectionsContainer.BackgroundTransparency = 1
 homeSectionsContainer.BorderSizePixel = 0
@@ -400,11 +404,51 @@ loadingLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 loadingLabel.Parent = loadingPanel
 
 -- ========== BOTONES DE NAVEGACIÓN SUPERIOR ==========
+-- Reloj (hora actual)
+local clockLabel = Instance.new("TextLabel")
+clockLabel.Name = "ClockLabel"
+clockLabel.Size = UDim2.new(0, 100, 0, 30)
+clockLabel.Position = UDim2.new(0, 15, 0, 15)
+clockLabel.BackgroundTransparency = 1
+clockLabel.Text = os.date("%H:%M")
+clockLabel.Font = Enum.Font.GothamBold
+clockLabel.TextSize = 18
+clockLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+clockLabel.TextXAlignment = Enum.TextXAlignment.Left
+clockLabel.ZIndex = 5
+clockLabel.Parent = mainFrame
+
+-- Actualizar reloj cada segundo
+task.spawn(function()
+    while true do
+        task.wait(1)
+        clockLabel.Text = os.date("%H:%M")
+    end
+end)
+
+-- Botón de configuración
+local settingsButton = Instance.new("TextButton")
+settingsButton.Name = "SettingsButton"
+settingsButton.Size = UDim2.new(0, 45, 0, 45)
+settingsButton.Position = isAdmin and UDim2.new(1, -70, 0, 15) or UDim2.new(1, -15, 0, 15)
+settingsButton.AnchorPoint = Vector2.new(1, 0)
+settingsButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
+settingsButton.Text = "⚙️"
+settingsButton.Font = Enum.Font.GothamBold
+settingsButton.TextSize = 22
+settingsButton.BorderSizePixel = 0
+settingsButton.ZIndex = 5
+settingsButton.Parent = mainFrame
+
+local settingsCorner = Instance.new("UICorner")
+settingsCorner.CornerRadius = UDim.new(1, 0)
+settingsCorner.Parent = settingsButton
+
 -- Botón de creador (icono)
 local creatorButton = Instance.new("TextButton")
 creatorButton.Name = "CreatorButton"
 creatorButton.Size = UDim2.new(0, 45, 0, 45)
-creatorButton.Position = UDim2.new(1, -70, 0, 15)
+creatorButton.Position = isAdmin and UDim2.new(1, -125, 0, 15) or UDim2.new(1, -70, 0, 15)
 creatorButton.AnchorPoint = Vector2.new(1, 0)
 creatorButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
 creatorButton.Text = "✏️"
@@ -552,6 +596,45 @@ titlePadding.PaddingLeft = UDim.new(0, 15)
 titlePadding.PaddingRight = UDim.new(0, 15)
 titlePadding.Parent = titleInput
 
+-- Etiqueta Categoría
+local categoryLabel = Instance.new("TextLabel")
+categoryLabel.Size = UDim2.new(1, 0, 0, 25)
+categoryLabel.BackgroundTransparency = 1
+categoryLabel.Text = "🏷️ Categoría"
+categoryLabel.Font = Enum.Font.GothamBold
+categoryLabel.TextSize = 18
+categoryLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
+categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+categoryLabel.LayoutOrder = 3
+categoryLabel.ZIndex = 11
+categoryLabel.Parent = creatorFieldsContainer
+
+-- Campo Categoría
+local categoryInput = Instance.new("TextBox")
+categoryInput.Name = "CategoryInput"
+categoryInput.Size = UDim2.new(1, 0, 0, 50)
+categoryInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+categoryInput.Text = ""
+categoryInput.PlaceholderText = "Ej: Tecnología, Deportes, Entretenimiento..."
+categoryInput.Font = Enum.Font.Gotham
+categoryInput.TextSize = 18
+categoryInput.TextColor3 = Color3.fromRGB(0, 0, 0)
+categoryInput.TextXAlignment = Enum.TextXAlignment.Left
+categoryInput.ClearTextOnFocus = false
+categoryInput.BorderSizePixel = 0
+categoryInput.LayoutOrder = 4
+categoryInput.ZIndex = 11
+categoryInput.Parent = creatorFieldsContainer
+
+local categoryCorner = Instance.new("UICorner")
+categoryCorner.CornerRadius = UDim.new(0, 10)
+categoryCorner.Parent = categoryInput
+
+local categoryPadding = Instance.new("UIPadding")
+categoryPadding.PaddingLeft = UDim.new(0, 15)
+categoryPadding.PaddingRight = UDim.new(0, 15)
+categoryPadding.Parent = categoryInput
+
 -- Etiqueta Contenido
 local contentLabel = Instance.new("TextLabel")
 contentLabel.Size = UDim2.new(1, 0, 0, 25)
@@ -561,7 +644,7 @@ contentLabel.Font = Enum.Font.GothamBold
 contentLabel.TextSize = 18
 contentLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
 contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-contentLabel.LayoutOrder = 3
+contentLabel.LayoutOrder = 5
 contentLabel.ZIndex = 11
 contentLabel.Parent = creatorFieldsContainer
 
@@ -581,7 +664,7 @@ contentInput.ClearTextOnFocus = false
 contentInput.MultiLine = true
 contentInput.TextWrapped = true
 contentInput.BorderSizePixel = 0
-contentInput.LayoutOrder = 4
+contentInput.LayoutOrder = 6
 contentInput.ZIndex = 11
 contentInput.Parent = creatorFieldsContainer
 
@@ -606,7 +689,7 @@ submitButton.Font = Enum.Font.GothamBold
 submitButton.TextSize = 20
 submitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 submitButton.BorderSizePixel = 0
-submitButton.LayoutOrder = 5
+submitButton.LayoutOrder = 7
 submitButton.ZIndex = 11
 submitButton.Parent = creatorFieldsContainer
 
@@ -944,9 +1027,9 @@ if isAdmin then
             loadingPanel.Visible = true
             loadingLabel.Text = "Publicando anuncio del sistema..."
             
-            -- Pasar true como tercer parámetro para publicar como Sistema
+            -- Pasar true como cuarto parámetro para publicar como Sistema
             local success, result = pcall(function()
-                return publishArticleFunction:InvokeServer(title, content, true)
+                return publishArticleFunction:InvokeServer(title, content, "Anuncio", true)
             end)
             
             loadingPanel.Visible = false
@@ -966,6 +1049,345 @@ if isAdmin then
     end)
 end
 
+-- ========== PANEL DE CONFIGURACIÓN ==========
+local settingsPanel = Instance.new("ScrollingFrame")
+settingsPanel.Name = "SettingsPanel"
+settingsPanel.Size = UDim2.new(1, 0, 1, 0)
+settingsPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+settingsPanel.BorderSizePixel = 0
+settingsPanel.Visible = false
+settingsPanel.ZIndex = 10
+settingsPanel.ScrollBarThickness = 8
+settingsPanel.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+settingsPanel.Parent = mainFrame
+
+local settingsLayout = Instance.new("UIListLayout")
+settingsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+settingsLayout.Padding = UDim.new(0, 20)
+settingsLayout.Parent = settingsPanel
+
+local settingsPadding = Instance.new("UIPadding")
+settingsPadding.PaddingLeft = UDim.new(0, 30)
+settingsPadding.PaddingRight = UDim.new(0, 30)
+settingsPadding.PaddingTop = UDim.new(0, 30)
+settingsPadding.PaddingBottom = UDim.new(0, 30)
+settingsPadding.Parent = settingsPanel
+
+-- Header
+local settingsHeaderContainer = Instance.new("Frame")
+settingsHeaderContainer.Size = UDim2.new(1, 0, 0, 60)
+settingsHeaderContainer.BackgroundTransparency = 1
+settingsHeaderContainer.LayoutOrder = 1
+settingsHeaderContainer.Parent = settingsPanel
+
+local settingsTitle = Instance.new("TextLabel")
+settingsTitle.Size = UDim2.new(1, -60, 1, 0)
+settingsTitle.BackgroundTransparency = 1
+settingsTitle.Text = "⚙️ CONFIGURACIÓN"
+settingsTitle.Font = Enum.Font.GothamBold
+settingsTitle.TextSize = 28
+settingsTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
+settingsTitle.TextXAlignment = Enum.TextXAlignment.Left
+settingsTitle.ZIndex = 11
+settingsTitle.Parent = settingsHeaderContainer
+
+local settingsCloseButton = Instance.new("TextButton")
+settingsCloseButton.Size = UDim2.new(0, 45, 0, 45)
+settingsCloseButton.Position = UDim2.new(1, 0, 0, 0)
+settingsCloseButton.AnchorPoint = Vector2.new(1, 0)
+settingsCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+settingsCloseButton.Text = "✕"
+settingsCloseButton.Font = Enum.Font.GothamBold
+settingsCloseButton.TextSize = 24
+settingsCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
+settingsCloseButton.BorderSizePixel = 0
+settingsCloseButton.ZIndex = 11
+settingsCloseButton.Parent = settingsHeaderContainer
+
+local settingsCloseCorner = Instance.new("UICorner")
+settingsCloseCorner.CornerRadius = UDim.new(1, 0)
+settingsCloseCorner.Parent = settingsCloseButton
+
+-- Versión del juego
+local versionContainer = Instance.new("Frame")
+versionContainer.Size = UDim2.new(1, 0, 0, 100)
+versionContainer.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
+versionContainer.BorderSizePixel = 0
+versionContainer.LayoutOrder = 2
+versionContainer.ZIndex = 11
+versionContainer.Parent = settingsPanel
+
+local versionCorner = Instance.new("UICorner")
+versionCorner.CornerRadius = UDim.new(0, 12)
+versionCorner.Parent = versionContainer
+
+local versionLayout = Instance.new("UIListLayout")
+versionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+versionLayout.Padding = UDim.new(0, 8)
+versionLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+versionLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+versionLayout.Parent = versionContainer
+
+local versionLabel = Instance.new("TextLabel")
+versionLabel.Size = UDim2.new(1, 0, 0, 30)
+versionLabel.BackgroundTransparency = 1
+versionLabel.Text = "Versión del Juego"
+versionLabel.Font = Enum.Font.GothamBold
+versionLabel.TextSize = 18
+versionLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+versionLabel.LayoutOrder = 1
+versionLabel.ZIndex = 12
+versionLabel.Parent = versionContainer
+
+local versionNumber = Instance.new("TextLabel")
+versionNumber.Name = "VersionNumber"
+versionNumber.Size = UDim2.new(1, 0, 0, 35)
+versionNumber.BackgroundTransparency = 1
+versionNumber.Text = "Cargando..."
+versionNumber.Font = Enum.Font.GothamBold
+versionNumber.TextSize = 32
+versionNumber.TextColor3 = Color3.fromRGB(66, 133, 244)
+versionNumber.LayoutOrder = 2
+versionNumber.ZIndex = 12
+versionNumber.Parent = versionContainer
+
+-- Detectar versión automáticamente
+task.spawn(function()
+    local success, placeVersion = pcall(function()
+        return game.PlaceVersion
+    end)
+    if success then
+        versionNumber.Text = "v" .. tostring(placeVersion)
+    else
+        versionNumber.Text = "v1.0.0"
+    end
+end)
+
+-- Derechos reservados
+local copyrightContainer = Instance.new("Frame")
+copyrightContainer.Size = UDim2.new(1, 0, 0, 80)
+copyrightContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+copyrightContainer.BorderSizePixel = 0
+copyrightContainer.LayoutOrder = 3
+copyrightContainer.ZIndex = 11
+copyrightContainer.Parent = settingsPanel
+
+local copyrightCorner = Instance.new("UICorner")
+copyrightCorner.CornerRadius = UDim.new(0, 12)
+copyrightCorner.Parent = copyrightContainer
+
+local copyrightText = Instance.new("TextLabel")
+copyrightText.Size = UDim2.new(1, -40, 1, 0)
+copyrightText.Position = UDim2.new(0, 20, 0, 0)
+copyrightText.BackgroundTransparency = 1
+copyrightText.Text = "© 2025 Glam. Todos los derechos reservados."
+copyrightText.Font = Enum.Font.Gotham
+copyrightText.TextSize = 16
+copyrightText.TextColor3 = Color3.fromRGB(80, 80, 80)
+copyrightText.TextWrapped = true
+copyrightText.ZIndex = 12
+copyrightText.Parent = copyrightContainer
+
+-- Advertencia spam/enlaces
+local warningContainer = Instance.new("Frame")
+warningContainer.Size = UDim2.new(1, 0, 0, 150)
+warningContainer.BackgroundColor3 = Color3.fromRGB(255, 243, 224)
+warningContainer.BorderSizePixel = 0
+warningContainer.LayoutOrder = 4
+warningContainer.ZIndex = 11
+warningContainer.Parent = settingsPanel
+
+local warningCorner = Instance.new("UICorner")
+warningCorner.CornerRadius = UDim.new(0, 12)
+warningCorner.Parent = warningContainer
+
+local warningStroke = Instance.new("UIStroke")
+warningStroke.Color = Color3.fromRGB(255, 193, 7)
+warningStroke.Thickness = 2
+warningStroke.Parent = warningContainer
+
+local warningLayout = Instance.new("UIListLayout")
+warningLayout.SortOrder = Enum.SortOrder.LayoutOrder
+warningLayout.Padding = UDim.new(0, 10)
+warningLayout.Parent = warningContainer
+
+local warningPadding = Instance.new("UIPadding")
+warningPadding.PaddingLeft = UDim.new(0, 20)
+warningPadding.PaddingRight = UDim.new(0, 20)
+warningPadding.PaddingTop = UDim.new(0, 15)
+warningPadding.PaddingBottom = UDim.new(0, 15)
+warningPadding.Parent = warningContainer
+
+local warningTitle = Instance.new("TextLabel")
+warningTitle.Size = UDim2.new(1, 0, 0, 25)
+warningTitle.BackgroundTransparency = 1
+warningTitle.Text = "⚠️ ADVERTENCIA"
+warningTitle.Font = Enum.Font.GothamBold
+warningTitle.TextSize = 18
+warningTitle.TextColor3 = Color3.fromRGB(255, 111, 0)
+warningTitle.TextXAlignment = Enum.TextXAlignment.Left
+warningTitle.LayoutOrder = 1
+warningTitle.ZIndex = 12
+warningTitle.Parent = warningContainer
+
+local warningText = Instance.new("TextLabel")
+warningText.Size = UDim2.new(1, 0, 0, 80)
+warningText.BackgroundTransparency = 1
+warningText.Text = "Cualquier artículo que se use para promocionar, hacer spam o contenga enlaces será eliminado inmediatamente de la plataforma. El autor puede ser sancionado."
+warningText.Font = Enum.Font.Gotham
+warningText.TextSize = 15
+warningText.TextColor3 = Color3.fromRGB(100, 100, 100)
+warningText.TextWrapped = true
+warningText.TextXAlignment = Enum.TextXAlignment.Left
+warningText.TextYAlignment = Enum.TextYAlignment.Top
+warningText.LayoutOrder = 2
+warningText.ZIndex = 12
+warningText.Parent = warningContainer
+
+-- Botón Términos y Condiciones
+local termsButton = Instance.new("TextButton")
+termsButton.Size = UDim2.new(1, 0, 0, 55)
+termsButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+termsButton.Text = "📜 Términos y Condiciones"
+termsButton.Font = Enum.Font.GothamBold
+termsButton.TextSize = 18
+termsButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+termsButton.BorderSizePixel = 0
+termsButton.LayoutOrder = 5
+termsButton.ZIndex = 11
+termsButton.Parent = settingsPanel
+
+local termsButtonCorner = Instance.new("UICorner")
+termsButtonCorner.CornerRadius = UDim.new(0, 12)
+termsButtonCorner.Parent = termsButton
+
+-- Actualizar CanvasSize
+task.wait(0.1)
+settingsPanel.CanvasSize = UDim2.new(0, 0, 0, settingsLayout.AbsoluteContentSize.Y + 60)
+
+-- ========== PANEL DE TÉRMINOS Y CONDICIONES ==========
+local termsPanel = Instance.new("ScrollingFrame")
+termsPanel.Name = "TermsPanel"
+termsPanel.Size = UDim2.new(1, 0, 1, 0)
+termsPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+termsPanel.BorderSizePixel = 0
+termsPanel.Visible = false
+termsPanel.ZIndex = 10
+termsPanel.ScrollBarThickness = 8
+termsPanel.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+termsPanel.Parent = mainFrame
+
+local termsLayoutUI = Instance.new("UIListLayout")
+termsLayoutUI.SortOrder = Enum.SortOrder.LayoutOrder
+termsLayoutUI.Padding = UDim.new(0, 20)
+termsLayoutUI.Parent = termsPanel
+
+local termsPaddingUI = Instance.new("UIPadding")
+termsPaddingUI.PaddingLeft = UDim.new(0, 30)
+termsPaddingUI.PaddingRight = UDim.new(0, 30)
+termsPaddingUI.PaddingTop = UDim.new(0, 30)
+termsPaddingUI.PaddingBottom = UDim.new(0, 30)
+termsPaddingUI.Parent = termsPanel
+
+-- Header términos
+local termsHeaderContainer = Instance.new("Frame")
+termsHeaderContainer.Size = UDim2.new(1, 0, 0, 60)
+termsHeaderContainer.BackgroundTransparency = 1
+termsHeaderContainer.LayoutOrder = 1
+termsHeaderContainer.Parent = termsPanel
+
+local termsHeaderTitle = Instance.new("TextLabel")
+termsHeaderTitle.Size = UDim2.new(1, -60, 1, 0)
+termsHeaderTitle.BackgroundTransparency = 1
+termsHeaderTitle.Text = "📜 TÉRMINOS Y CONDICIONES"
+termsHeaderTitle.Font = Enum.Font.GothamBold
+termsHeaderTitle.TextSize = 26
+termsHeaderTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
+termsHeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
+termsHeaderTitle.ZIndex = 11
+termsHeaderTitle.Parent = termsHeaderContainer
+
+local termsCloseButton = Instance.new("TextButton")
+termsCloseButton.Size = UDim2.new(0, 45, 0, 45)
+termsCloseButton.Position = UDim2.new(1, 0, 0, 0)
+termsCloseButton.AnchorPoint = Vector2.new(1, 0)
+termsCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
+termsCloseButton.Text = "✕"
+termsCloseButton.Font = Enum.Font.GothamBold
+termsCloseButton.TextSize = 24
+termsCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
+termsCloseButton.BorderSizePixel = 0
+termsCloseButton.ZIndex = 11
+termsCloseButton.Parent = termsHeaderContainer
+
+local termsCloseCorner = Instance.new("UICorner")
+termsCloseCorner.CornerRadius = UDim.new(1, 0)
+termsCloseCorner.Parent = termsCloseButton
+
+-- Contenido de términos
+local termsContent = Instance.new("TextLabel")
+termsContent.Size = UDim2.new(1, 0, 0, 0)
+termsContent.AutomaticSize = Enum.AutomaticSize.Y
+termsContent.BackgroundTransparency = 1
+termsContent.Text = [[1. ACEPTACIÓN DE LOS TÉRMINOS
+
+Al usar Roogle, aceptas cumplir con estos términos y condiciones.
+
+2. USO DEL SERVICIO
+
+• Roogle es un motor de búsqueda de artículos creados por la comunidad.
+• Los usuarios pueden publicar artículos que serán revisados por administradores.
+• El contenido debe ser apropiado y respetuoso.
+
+3. CONTENIDO PROHIBIDO
+
+Está estrictamente prohibido publicar:
+• Spam o promociones no autorizadas
+• Enlaces externos sin autorización
+• Contenido ofensivo, difamatorio o ilegal
+• Material protegido por derechos de autor
+
+4. MODERACIÓN
+
+• Todos los artículos pasan por revisión antes de publicarse.
+• Los administradores pueden aprobar, rechazar o eliminar contenido.
+• Los usuarios que violen las normas pueden ser sancionados o baneados.
+
+5. PROPIEDAD INTELECTUAL
+
+• Los usuarios retienen los derechos de su contenido original.
+• Al publicar, otorgas a Roogle licencia para mostrar tu contenido.
+• © 2025 Glam. Todos los derechos reservados.
+
+6. PRIVACIDAD
+
+• Roogle respeta tu privacidad dentro de la plataforma Roblox.
+• La información del usuario se usa solo para funciones del juego.
+
+7. MODIFICACIONES
+
+• Estos términos pueden actualizarse sin previo aviso.
+• Es responsabilidad del usuario revisar los términos periódicamente.
+
+8. CONTACTO
+
+Para preguntas o reportes, contacta a los administradores del juego.
+
+Última actualización: 26 de octubre de 2025]]
+termsContent.Font = Enum.Font.Gotham
+termsContent.TextSize = 16
+termsContent.TextColor3 = Color3.fromRGB(50, 50, 50)
+termsContent.TextXAlignment = Enum.TextXAlignment.Left
+termsContent.TextYAlignment = Enum.TextYAlignment.Top
+termsContent.TextWrapped = true
+termsContent.LayoutOrder = 2
+termsContent.ZIndex = 11
+termsContent.Parent = termsPanel
+
+-- Actualizar CanvasSize
+task.wait(0.1)
+termsPanel.CanvasSize = UDim2.new(0, 0, 0, termsLayoutUI.AbsoluteContentSize.Y + 60)
+
 -- ========== FUNCIONES ==========
 
 local previousView = "home"
@@ -979,6 +1401,8 @@ local function setInterfaceView(viewName)
     articleViewFrame.Visible = (viewName == "article")
     profileFrame.Visible = (viewName == "profile")
     creatorPanel.Visible = (viewName == "creator")
+    settingsPanel.Visible = (viewName == "settings")
+    termsPanel.Visible = (viewName == "terms")
     if adminPanel then
         adminPanel.Visible = (viewName == "admin")
     end
@@ -1346,12 +1770,24 @@ local function showArticle(articleId)
     articleTitle.LayoutOrder = 2
     articleTitle.Parent = articleViewFrame
     
+    -- Categoría dentro del artículo (SIN EMOJI)
+    local categoryLabel = Instance.new("TextLabel")
+    categoryLabel.Size = UDim2.new(1, 0, 0, 20)
+    categoryLabel.BackgroundTransparency = 1
+    categoryLabel.Text = article.category or "General"
+    categoryLabel.Font = Enum.Font.GothamBold
+    categoryLabel.TextSize = 14
+    categoryLabel.TextColor3 = Color3.fromRGB(66, 133, 244)
+    categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+    categoryLabel.LayoutOrder = 3
+    categoryLabel.Parent = articleViewFrame
+    
     -- Información del autor (clickeable)
     local authorContainer = Instance.new("TextButton")
     authorContainer.Size = UDim2.new(1, 0, 0, 60)
     authorContainer.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
     authorContainer.BorderSizePixel = 0
-    authorContainer.LayoutOrder = 3
+    authorContainer.LayoutOrder = 4
     authorContainer.AutoButtonColor = false
     authorContainer.Text = ""
     authorContainer.Parent = articleViewFrame
@@ -1436,7 +1872,7 @@ local function showArticle(articleId)
     separator.Size = UDim2.new(1, 0, 0, 2)
     separator.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
     separator.BorderSizePixel = 0
-    separator.LayoutOrder = 4
+    separator.LayoutOrder = 5
     separator.Parent = articleViewFrame
     
     -- Contenido del artículo (SIN LÍMITE DE TAMAÑO)
@@ -1451,7 +1887,7 @@ local function showArticle(articleId)
     articleContent.TextXAlignment = Enum.TextXAlignment.Left
     articleContent.TextYAlignment = Enum.TextYAlignment.Top
     articleContent.TextWrapped = true
-    articleContent.LayoutOrder = 5
+    articleContent.LayoutOrder = 6
     articleContent.Parent = articleViewFrame
     
     -- Actualizar CanvasSize para permitir scroll completo
@@ -1466,7 +1902,7 @@ local function createHomeSection(title, articles, parent, layoutOrder)
     if #articles == 0 then return end
     
     local sectionContainer = Instance.new("Frame")
-    sectionContainer.Size = UDim2.new(1, 0, 0, 220)
+    sectionContainer.Size = UDim2.new(1, 0, 0, 240)
     sectionContainer.BackgroundTransparency = 1
     sectionContainer.LayoutOrder = layoutOrder
     sectionContainer.Parent = parent
@@ -1490,7 +1926,7 @@ local function createHomeSection(title, articles, parent, layoutOrder)
     
     -- Scroll horizontal de artículos
     local articlesScroll = Instance.new("ScrollingFrame")
-    articlesScroll.Size = UDim2.new(1, 0, 0, 180)
+    articlesScroll.Size = UDim2.new(1, 0, 0, 200)
     articlesScroll.BackgroundTransparency = 1
     articlesScroll.BorderSizePixel = 0
     articlesScroll.ScrollBarThickness = 4
@@ -1508,7 +1944,7 @@ local function createHomeSection(title, articles, parent, layoutOrder)
     -- Crear tarjetas de artículos
     for i, article in ipairs(articles) do
         local articleCard = Instance.new("TextButton")
-        articleCard.Size = UDim2.new(0, 300, 1, -10)
+        articleCard.Size = UDim2.new(0, 300, 0, 170)
         articleCard.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
         articleCard.BorderSizePixel = 0
         articleCard.AutoButtonColor = false
@@ -1560,11 +1996,23 @@ local function createHomeSection(title, articles, parent, layoutOrder)
         cardDesc.LayoutOrder = 2
         cardDesc.Parent = articleCard
         
+        -- Categoría
+        local categoryLabel = Instance.new("TextLabel")
+        categoryLabel.Size = UDim2.new(1, 0, 0, 18)
+        categoryLabel.BackgroundTransparency = 1
+        categoryLabel.Text = article.category or "General"
+        categoryLabel.Font = Enum.Font.Gotham
+        categoryLabel.TextSize = 12
+        categoryLabel.TextColor3 = Color3.fromRGB(66, 133, 244)
+        categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+        categoryLabel.LayoutOrder = 3
+        categoryLabel.Parent = articleCard
+        
         -- Autor con insignia
         local authorContainer = Instance.new("Frame")
         authorContainer.Size = UDim2.new(1, 0, 0, 20)
         authorContainer.BackgroundTransparency = 1
-        authorContainer.LayoutOrder = 3
+        authorContainer.LayoutOrder = 4
         authorContainer.Parent = articleCard
         
         local authorLayout = Instance.new("UIListLayout")
@@ -1597,7 +2045,7 @@ end
 
 local function createArticleCard(article, parent, index)
     local resultCard = Instance.new("Frame")
-    resultCard.Size = UDim2.new(1, 0, 0, 130)
+    resultCard.Size = UDim2.new(1, 0, 0, 150)
     resultCard.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     resultCard.BorderSizePixel = 0
     resultCard.LayoutOrder = index
@@ -1605,7 +2053,7 @@ local function createArticleCard(article, parent, index)
     
     local cardLayout = Instance.new("UIListLayout")
     cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    cardLayout.Padding = UDim.new(0, 8)
+    cardLayout.Padding = UDim.new(0, 6)
     cardLayout.Parent = resultCard
     
     local cardPadding = Instance.new("UIPadding")
@@ -1634,7 +2082,7 @@ local function createArticleCard(article, parent, index)
     
     -- Descripción
     local resultDesc = Instance.new("TextLabel")
-    resultDesc.Size = UDim2.new(1, 0, 0, 40)
+    resultDesc.Size = UDim2.new(1, 0, 0, 38)
     resultDesc.BackgroundTransparency = 1
     resultDesc.Text = string.sub(article.description, 1, 150) .. (string.len(article.description) > 150 and "..." or "")
     resultDesc.Font = Enum.Font.Gotham
@@ -1646,11 +2094,23 @@ local function createArticleCard(article, parent, index)
     resultDesc.LayoutOrder = 2
     resultDesc.Parent = resultCard
     
+    -- Categoría
+    local categoryLabel = Instance.new("TextLabel")
+    categoryLabel.Size = UDim2.new(1, 0, 0, 18)
+    categoryLabel.BackgroundTransparency = 1
+    categoryLabel.Text = article.category or "General"
+    categoryLabel.Font = Enum.Font.GothamBold
+    categoryLabel.TextSize = 13
+    categoryLabel.TextColor3 = Color3.fromRGB(66, 133, 244)
+    categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+    categoryLabel.LayoutOrder = 3
+    categoryLabel.Parent = resultCard
+    
     -- Autor (clickeable) con verificación AL LADO DEL NOMBRE - VERSIÓN CORRECTA
     local authorContainer = Instance.new("Frame")
-    authorContainer.Size = UDim2.new(1, 0, 0, 20)
+    authorContainer.Size = UDim2.new(1, 0, 0, 22)
     authorContainer.BackgroundTransparency = 1
-    authorContainer.LayoutOrder = 3
+    authorContainer.LayoutOrder = 4
     authorContainer.Parent = resultCard
     
     local authorLayout = Instance.new("UIListLayout")
@@ -1683,7 +2143,7 @@ local function createArticleCard(article, parent, index)
     dateText.BackgroundTransparency = 1
     dateText.Text = " • " .. article.dateCreated
     dateText.Font = Enum.Font.Gotham
-    authorText.TextSize = 14
+    dateText.TextSize = 14
     dateText.TextColor3 = Color3.fromRGB(120, 120, 120)
     dateText.Parent = authorContainer
     
@@ -1696,7 +2156,7 @@ local function createArticleCard(article, parent, index)
     divider.Size = UDim2.new(1, 0, 0, 1)
     divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
     divider.BorderSizePixel = 0
-    divider.LayoutOrder = 4
+    divider.LayoutOrder = 5
     divider.Parent = resultCard
 end
 
@@ -2174,7 +2634,7 @@ local function searchAndDisplayUsers(query)
             -- Botón verificar/desverificar
             local verifyButton = Instance.new("TextButton")
             verifyButton.Size = UDim2.new(0, 100, 0, 35)
-            verifyButton.Position = UDim2.new(1, -110, 0.5, -17.5)
+            verifyButton.Position = UDim2.new(1, -220, 0.5, -17.5)
             verifyButton.BackgroundColor3 = user.verified and Color3.fromRGB(200, 200, 200) or Color3.fromRGB(29, 161, 242)
             verifyButton.Text = user.verified and "Desverificar" or "Verificar"
             verifyButton.Font = Enum.Font.GothamBold
@@ -2214,6 +2674,73 @@ local function searchAndDisplayUsers(query)
                         verifiedBadge.Size = UDim2.new(0, 18, 0, 18)
                         verifiedBadge.ZIndex = 14
                         verifiedBadge.Parent = usernameContainer
+                    end
+                end
+            end)
+            
+            -- Botón bloquear/desbloquear
+            local banButton = Instance.new("TextButton")
+            banButton.Size = UDim2.new(0, 100, 0, 35)
+            banButton.Position = UDim2.new(1, -110, 0.5, -17.5)
+            banButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
+            banButton.Text = "Bloquear"
+            banButton.Font = Enum.Font.GothamBold
+            banButton.TextSize = 14
+            banButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            banButton.BorderSizePixel = 0
+            banButton.ZIndex = 14
+            banButton.Parent = userCard
+            
+            local banCorner = Instance.new("UICorner")
+            banCorner.CornerRadius = UDim.new(0, 8)
+            banCorner.Parent = banButton
+            
+            -- Verificar si ya está baneado
+            task.spawn(function()
+                local success, banStatus = pcall(function()
+                    return checkBanStatusEvent:InvokeServer()
+                end)
+                -- Actualizar apariencia del botón según estado de baneo del usuario objetivo
+                -- (esto se puede mejorar con una verificación específica del usuario)
+            end)
+            
+            banButton.MouseButton1Click:Connect(function()
+                -- Verificar si está baneado primero
+                local isBanned = false
+                for _, ban in ipairs(bannedUsers or {}) do
+                    if ban.userId == user.userId then
+                        isBanned = true
+                        break
+                    end
+                end
+                
+                if isBanned then
+                    -- Desbanear
+                    local success, result = pcall(function()
+                        return unbanUserEvent:InvokeServer(user.userId)
+                    end)
+                    
+                    if success and result then
+                        banButton.Text = "Bloquear"
+                        banButton.BackgroundColor3 = Color3.fromRGB(234, 67, 53)
+                        print("✓ Usuario desbloqueado:", user.username)
+                        task.wait(1)
+                        searchAndDisplayUsers(adminSearchBox.Text)
+                    end
+                else
+                    -- Banear
+                    local success, result = pcall(function()
+                        return banUserEvent:InvokeServer(user.userId, "Infracción de las normas de la comunidad")
+                    end)
+                    
+                    if success and result then
+                        banButton.Text = "Desbloquear"
+                        banButton.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+                        print("✓ Usuario bloqueado:", user.username)
+                        task.wait(1)
+                        searchAndDisplayUsers(adminSearchBox.Text)
+                    else
+                        warn("Error al bloquear usuario")
                     end
                 end
             end)
@@ -2272,23 +2799,45 @@ creatorCloseButton.MouseButton1Click:Connect(function()
     setInterfaceView("home")
 end)
 
+-- Panel de configuración
+settingsButton.MouseButton1Click:Connect(function()
+    setInterfaceView("settings")
+end)
+
+settingsCloseButton.MouseButton1Click:Connect(function()
+    setInterfaceView("home")
+end)
+
+-- Panel de términos
+termsButton.MouseButton1Click:Connect(function()
+    setInterfaceView("terms")
+end)
+
+termsCloseButton.MouseButton1Click:Connect(function()
+    setInterfaceView("settings")
+end)
+
 submitButton.MouseButton1Click:Connect(function()
     local title = titleInput.Text
+    local category = categoryInput.Text
     local content = contentInput.Text
     
-    if title ~= "" and content ~= "" then
+    if title ~= "" and category ~= "" and content ~= "" then
         loadingPanel.Visible = true
         loadingLabel.Text = "Enviando a revisión..."
         creatorPanel.Visible = false
         
         local success, result = pcall(function()
-            return publishArticleFunction:InvokeServer(title, content)
+            return publishArticleFunction:InvokeServer(title, content, category, false)
         end)
         
         loadingPanel.Visible = false
         
         if success and result == true then
             print("✓ Artículo enviado a revisión")
+            titleInput.Text = ""
+            categoryInput.Text = ""
+            contentInput.Text = ""
             setInterfaceView("home")
         else
             warn("✗ Error al enviar:", result)
@@ -2351,3 +2900,4 @@ if isAdmin then
     print("✓ Panel admin con gestión completa de artículos")
     print("✓ Panel admin con búsqueda de usuarios en tiempo real")
 end
+
