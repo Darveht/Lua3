@@ -270,123 +270,141 @@ if isAdmin then
     adminCorner.CornerRadius = UDim.new(0, 8)
     adminCorner.Parent = adminButton
 
-    -- PANEL DE PUBLICACIÓN
-    local publishPanel = Instance.new("Frame")
+    -- PANEL DE PUBLICACIÓN (PANTALLA COMPLETA)
+    local publishPanel = Instance.new("ScrollingFrame")
     publishPanel.Name = "PublishPanel"
     publishPanel.Size = UDim2.new(1, 0, 1, 0)
-    publishPanel.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    publishPanel.BackgroundTransparency = 0.5
+    publishPanel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     publishPanel.BorderSizePixel = 0
     publishPanel.Visible = false
     publishPanel.ZIndex = 10
+    publishPanel.ScrollBarThickness = 8
+    publishPanel.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
     publishPanel.Parent = mainFrame
 
-    -- Contenedor del formulario
-    local formContainer = Instance.new("Frame")
-    formContainer.Size = UDim2.new(0, 700, 0, 600)
-    formContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
-    formContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-    formContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    formContainer.BorderSizePixel = 0
-    formContainer.ZIndex = 11
-    formContainer.Parent = publishPanel
+    local publishLayout = Instance.new("UIListLayout")
+    publishLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    publishLayout.Padding = UDim.new(0, 20)
+    publishLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    publishLayout.Parent = publishPanel
 
-    local formCorner = Instance.new("UICorner")
-    formCorner.CornerRadius = UDim.new(0, 12)
-    formCorner.Parent = formContainer
+    local publishPadding = Instance.new("UIPadding")
+    publishPadding.PaddingLeft = UDim.new(0, 20)
+    publishPadding.PaddingRight = UDim.new(0, 20)
+    publishPadding.PaddingTop = UDim.new(0, 30)
+    publishPadding.PaddingBottom = UDim.new(0, 30)
+    publishPadding.Parent = publishPanel
 
-    -- Título del panel
+    -- Header con título y botón cerrar
+    local headerContainer = Instance.new("Frame")
+    headerContainer.Size = UDim2.new(1, 0, 0, 50)
+    headerContainer.BackgroundTransparency = 1
+    headerContainer.LayoutOrder = 1
+    headerContainer.Parent = publishPanel
+
     local publishTitle = Instance.new("TextLabel")
-    publishTitle.Size = UDim2.new(1, -100, 0, 40)
-    publishTitle.Position = UDim2.new(0, 30, 0, 20)
+    publishTitle.Size = UDim2.new(1, -60, 1, 0)
+    publishTitle.Position = UDim2.new(0, 0, 0, 0)
     publishTitle.BackgroundTransparency = 1
     publishTitle.Text = "✏ PUBLICAR NUEVO ARTÍCULO"
     publishTitle.Font = Enum.Font.GothamBold
-    publishTitle.TextSize = 24
+    publishTitle.TextSize = 28
     publishTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
     publishTitle.TextXAlignment = Enum.TextXAlignment.Left
-    publishTitle.ZIndex = 12
-    publishTitle.Parent = formContainer
+    publishTitle.TextScaled = false
+    publishTitle.ZIndex = 11
+    publishTitle.Parent = headerContainer
 
-    -- Botón cerrar
     local closeButton = Instance.new("TextButton")
-    closeButton.Size = UDim2.new(0, 35, 0, 35)
-    closeButton.Position = UDim2.new(1, -20, 0, 20)
+    closeButton.Size = UDim2.new(0, 45, 0, 45)
+    closeButton.Position = UDim2.new(1, 0, 0, 0)
     closeButton.AnchorPoint = Vector2.new(1, 0)
     closeButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
     closeButton.Text = "✕"
     closeButton.Font = Enum.Font.GothamBold
-    closeButton.TextSize = 20
+    closeButton.TextSize = 24
     closeButton.TextColor3 = Color3.fromRGB(100, 100, 100)
     closeButton.BorderSizePixel = 0
-    closeButton.ZIndex = 12
-    closeButton.Parent = formContainer
+    closeButton.ZIndex = 11
+    closeButton.Parent = headerContainer
 
     local closeCorner = Instance.new("UICorner")
     closeCorner.CornerRadius = UDim.new(1, 0)
     closeCorner.Parent = closeButton
 
+    -- Contenedor de campos
+    local fieldsContainer = Instance.new("Frame")
+    fieldsContainer.Size = UDim2.new(1, 0, 0, 600)
+    fieldsContainer.BackgroundTransparency = 1
+    fieldsContainer.LayoutOrder = 2
+    fieldsContainer.Parent = publishPanel
+
+    local fieldsLayout = Instance.new("UIListLayout")
+    fieldsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    fieldsLayout.Padding = UDim.new(0, 15)
+    fieldsLayout.Parent = fieldsContainer
+
     -- Etiqueta Título
     local titleLabel = Instance.new("TextLabel")
-    titleLabel.Size = UDim2.new(1, -60, 0, 25)
-    titleLabel.Position = UDim2.new(0, 30, 0, 80)
+    titleLabel.Size = UDim2.new(1, 0, 0, 25)
     titleLabel.BackgroundTransparency = 1
     titleLabel.Text = "📝 Título del artículo"
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.TextSize = 16
+    titleLabel.TextSize = 18
     titleLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
     titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.ZIndex = 12
-    titleLabel.Parent = formContainer
+    titleLabel.LayoutOrder = 1
+    titleLabel.ZIndex = 11
+    titleLabel.Parent = fieldsContainer
 
     -- Campo Título
     local titleInput = Instance.new("TextBox")
     titleInput.Name = "TitleInput"
-    titleInput.Size = UDim2.new(1, -60, 0, 45)
-    titleInput.Position = UDim2.new(0, 30, 0, 110)
+    titleInput.Size = UDim2.new(1, 0, 0, 50)
     titleInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     titleInput.Text = ""
     titleInput.PlaceholderText = "Escribe el título del artículo..."
     titleInput.Font = Enum.Font.Gotham
-    titleInput.TextSize = 16
+    titleInput.TextSize = 18
     titleInput.TextColor3 = Color3.fromRGB(0, 0, 0)
     titleInput.TextXAlignment = Enum.TextXAlignment.Left
     titleInput.ClearTextOnFocus = false
     titleInput.BorderSizePixel = 0
-    titleInput.ZIndex = 12
-    titleInput.Parent = formContainer
+    titleInput.LayoutOrder = 2
+    titleInput.ZIndex = 11
+    titleInput.Parent = fieldsContainer
 
     local titleCorner = Instance.new("UICorner")
-    titleCorner.CornerRadius = UDim.new(0, 8)
+    titleCorner.CornerRadius = UDim.new(0, 10)
     titleCorner.Parent = titleInput
 
     local titlePadding = Instance.new("UIPadding")
     titlePadding.PaddingLeft = UDim.new(0, 15)
+    titlePadding.PaddingRight = UDim.new(0, 15)
     titlePadding.Parent = titleInput
 
     -- Etiqueta Contenido
     local contentLabel = Instance.new("TextLabel")
-    contentLabel.Size = UDim2.new(1, -60, 0, 25)
-    contentLabel.Position = UDim2.new(0, 30, 0, 170)
+    contentLabel.Size = UDim2.new(1, 0, 0, 25)
     contentLabel.BackgroundTransparency = 1
     contentLabel.Text = "📄 Contenido del artículo"
     contentLabel.Font = Enum.Font.GothamBold
-    contentLabel.TextSize = 16
+    contentLabel.TextSize = 18
     contentLabel.TextColor3 = Color3.fromRGB(60, 60, 60)
     contentLabel.TextXAlignment = Enum.TextXAlignment.Left
-    contentLabel.ZIndex = 12
-    contentLabel.Parent = formContainer
+    contentLabel.LayoutOrder = 3
+    contentLabel.ZIndex = 11
+    contentLabel.Parent = fieldsContainer
 
     -- Campo Contenido
     local contentInput = Instance.new("TextBox")
     contentInput.Name = "ContentInput"
-    contentInput.Size = UDim2.new(1, -60, 0, 280)
-    contentInput.Position = UDim2.new(0, 30, 0, 200)
+    contentInput.Size = UDim2.new(1, 0, 0, 350)
     contentInput.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
     contentInput.Text = ""
     contentInput.PlaceholderText = "Escribe el contenido completo del artículo..."
     contentInput.Font = Enum.Font.Gotham
-    contentInput.TextSize = 16
+    contentInput.TextSize = 18
     contentInput.TextColor3 = Color3.fromRGB(0, 0, 0)
     contentInput.TextXAlignment = Enum.TextXAlignment.Left
     contentInput.TextYAlignment = Enum.TextYAlignment.Top
@@ -394,36 +412,43 @@ if isAdmin then
     contentInput.MultiLine = true
     contentInput.TextWrapped = true
     contentInput.BorderSizePixel = 0
-    contentInput.ZIndex = 12
-    contentInput.Parent = formContainer
+    contentInput.LayoutOrder = 4
+    contentInput.ZIndex = 11
+    contentInput.Parent = fieldsContainer
 
     local contentCorner = Instance.new("UICorner")
-    contentCorner.CornerRadius = UDim.new(0, 8)
+    contentCorner.CornerRadius = UDim.new(0, 10)
     contentCorner.Parent = contentInput
 
     local contentPadding = Instance.new("UIPadding")
     contentPadding.PaddingLeft = UDim.new(0, 15)
     contentPadding.PaddingTop = UDim.new(0, 15)
     contentPadding.PaddingRight = UDim.new(0, 15)
+    contentPadding.PaddingBottom = UDim.new(0, 15)
     contentPadding.Parent = contentInput
 
     -- Botón publicar
     local publishButton = Instance.new("TextButton")
     publishButton.Name = "PublishArticleButton"
-    publishButton.Size = UDim2.new(1, -60, 0, 50)
-    publishButton.Position = UDim2.new(0, 30, 0, 500)
+    publishButton.Size = UDim2.new(1, 0, 0, 55)
     publishButton.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
     publishButton.Text = "✓ Publicar Artículo"
     publishButton.Font = Enum.Font.GothamBold
-    publishButton.TextSize = 18
+    publishButton.TextSize = 20
     publishButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     publishButton.BorderSizePixel = 0
-    publishButton.ZIndex = 12
-    publishButton.Parent = formContainer
+    publishButton.LayoutOrder = 5
+    publishButton.ZIndex = 11
+    publishButton.Parent = fieldsContainer
 
     local pubCorner = Instance.new("UICorner")
-    pubCorner.CornerRadius = UDim.new(0, 8)
+    pubCorner.CornerRadius = UDim.new(0, 10)
     pubCorner.Parent = publishButton
+
+    -- Actualizar CanvasSize dinámicamente
+    task.wait(0.1)
+    fieldsContainer.Size = UDim2.new(1, 0, 0, fieldsLayout.AbsoluteContentSize.Y)
+    publishPanel.CanvasSize = UDim2.new(0, 0, 0, publishLayout.AbsoluteContentSize.Y + 60)
 
     -- EVENTOS DE PUBLICACIÓN
     adminButton.MouseButton1Click:Connect(function()
