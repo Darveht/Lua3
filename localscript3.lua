@@ -29,6 +29,25 @@ R.searchBoxHeader.FocusLost:Connect(function(enterPressed)
         end
 end)
 
+-- PESTAÑAS DE BÚSQUEDA
+R.articlesTab.MouseButton1Click:Connect(function()
+        R.activeSearchTab = "articles"
+        R.articlesTab.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+        R.articlesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+        R.musicTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        R.musicTab.TextColor3 = Color3.fromRGB(100, 100, 100)
+        R.loadArticles(R.searchBoxHeader.Text)
+end)
+
+R.musicTab.MouseButton1Click:Connect(function()
+        R.activeSearchTab = "music"
+        R.musicTab.BackgroundColor3 = Color3.fromRGB(255, 87, 34)
+        R.musicTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+        R.articlesTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+        R.articlesTab.TextColor3 = Color3.fromRGB(100, 100, 100)
+        R.loadMusic(R.searchBoxHeader.Text)
+end)
+
 -- Volver al inicio desde resultados
 R.homeButton.MouseButton1Click:Connect(function()
         R.setInterfaceView("home")

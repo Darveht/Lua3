@@ -815,6 +815,312 @@ R.loadArticles = function(query)
         R.resultsScrollFrame.CanvasSize = UDim2.new(0, 0, 0, R.resultsLayout.AbsoluteContentSize.Y + 60)
 end
 
+-- Función para cargar música
+R.loadMusic = function(query)
+        for _, child in ipairs(R.resultsScrollFrame:GetChildren()) do
+                if child:IsA("Frame") or child:IsA("TextLabel") then
+                        child:Destroy()
+                end
+        end
+
+        local success, musicList = pcall(function()
+                return R.getMusicEvent:InvokeServer()
+        end)
+
+        if not success or not musicList then
+                warn("Error al cargar música")
+                return
+        end
+
+        -- Filtrar por query si existe
+        local filteredMusic = {}
+        if query and query ~= "" then
+                local queryLower = string.lower(query)
+                for _, music in ipairs(musicList) do
+                        local nameLower = string.lower(music.name)
+                        local categoryLower = string.lower(music.category)
+                        if string.find(nameLower, queryLower) or string.find(categoryLower, queryLower) then
+                                table.insert(filteredMusic, music)
+                        end
+                end
+        else
+                filteredMusic = musicList
+        end
+
+        if #filteredMusic == 0 then
+                local noResults = Instance.new("TextLabel")
+                noResults.Size = UDim2.new(1, 0, 0, 100)
+                noResults.BackgroundTransparency = 1
+                noResults.Text = query == "" and "No hay música disponible" or "No se encontró música para " .. query
+                noResults.Font = Enum.Font.Gotham
+                noResults.TextSize = 18
+                noResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+                noResults.Parent = R.resultsScrollFrame
+        else
+                for i, music in ipairs(filteredMusic) do
+                        local musicCard = Instance.new("Frame")
+                        musicCard.Size = UDim2.new(1, 0, 0, 120)
+                        musicCard.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                        musicCard.BorderSizePixel = 0
+                        musicCard.LayoutOrder = i
+                        musicCard.Parent = R.resultsScrollFrame
+
+                        local musicCardCorner = Instance.new("UICorner")
+                        musicCardCorner.CornerRadius = UDim.new(0, 10)
+                        musicCardCorner.Parent = musicCard
+
+                        local musicCardLayout = Instance.new("UIListLayout")
+                        musicCardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                        musicCardLayout.Padding = UDim.new(0, 6)
+                        musicCardLayout.Parent = musicCard
+
+                        local musicCardPadding = Instance.new("UIPadding")
+                        musicCardPadding.PaddingLeft = UDim.new(0, 15)
+                        musicCardPadding.PaddingRight = UDim.new(0, 15)
+                        musicCardPadding.PaddingTop = UDim.new(0, 15)
+                        musicCardPadding.PaddingBottom = UDim.new(0, 15)
+                        musicCardPadding.Parent = musicCard
+
+                        local musicTitle = Instance.new("TextLabel")
+                        musicTitle.Size = UDim2.new(1, 0, 0, 24)
+                        musicTitle.BackgroundTransparency = 1
+                        musicTitle.Text = "🎵 " .. music.name
+                        musicTitle.Font = Enum.Font.GothamBold
+                        musicTitle.TextSize = 18
+                        musicTitle.TextColor3 = Color3.fromRGB(255, 87, 34)
+                        musicTitle.TextXAlignment = Enum.TextXAlignment.Left
+                        musicTitle.LayoutOrder = 1
+                        musicTitle.Parent = musicCard
+
+                        local musicCategory = Instance.new("TextLabel")
+                        musicCategory.Size = UDim2.new(1, 0, 0, 20)
+                        musicCategory.BackgroundTransparency = 1
+                        musicCategory.Text = "Categoría: " .. music.category
+                        musicCategory.Font = Enum.Font.Gotham
+                        musicCategory.TextSize = 14
+                        musicCategory.TextColor3 = Color3.fromRGB(100, 100, 100)
+                        musicCategory.TextXAlignment = Enum.TextXAlignment.Left
+                        musicCategory.LayoutOrder = 2
+                        musicCategory.Parent = musicCard
+
+                        local musicAuthor = Instance.new("TextLabel")
+                        musicAuthor.Size = UDim2.new(1, 0, 0, 18)
+                        musicAuthor.BackgroundTransparency = 1
+                        musicAuthor.Text = "Por " .. music.author .. " • " .. music.dateCreated
+                        musicAuthor.Font = Enum.Font.Gotham
+                        musicAuthor.TextSize = 13
+                        musicAuthor.TextColor3 = Color3.fromRGB(120, 120, 120)
+                        musicAuthor.TextXAlignment = Enum.TextXAlignment.Left
+                        musicAuthor.LayoutOrder = 3
+                        musicAuthor.Parent = musicCard
+
+                        local divider = Instance.new("Frame")
+                        divider.Size = UDim2.new(1, 0, 0, 1)
+                        divider.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+                        divider.BorderSizePixel = 0
+                        divider.LayoutOrder = 4
+                        divider.Parent = musicCard
+                end
+        end
+
+        task.wait(0.1)
+        R.resultsScrollFrame.CanvasSize = UDim2.new(0, 0, 0, R.resultsLayout.AbsoluteContentSize.Y + 60)
+end
+
+-- Función para crear sección de creadores destacados
+R.createFeaturedCreators = function(parent, layoutOrder)
+        local success, users = pcall(function()
+                return R.searchUsersEvent:InvokeServer("")
+        end)
+
+        if not success or not users or #users == 0 then
+                return
+        end
+
+        -- Filtrar solo usuarios verificados
+        local verifiedUsers = {}
+        for _, user in ipairs(users) do
+                if user.verified then
+                        table.insert(verifiedUsers, user)
+                end
+        end
+
+        if #verifiedUsers == 0 then
+                return
+        end
+
+        local creatorsSection = Instance.new("Frame")
+        creatorsSection.Size = UDim2.new(1, 0, 0, 220)
+        creatorsSection.BackgroundTransparency = 1
+        creatorsSection.LayoutOrder = layoutOrder
+        creatorsSection.Parent = parent
+
+        local creatorsLayout = Instance.new("UIListLayout")
+        creatorsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        creatorsLayout.Padding = UDim.new(0, 10)
+        creatorsLayout.Parent = creatorsSection
+
+        local creatorsTitle = Instance.new("TextLabel")
+        creatorsTitle.Size = UDim2.new(1, 0, 0, 30)
+        creatorsTitle.BackgroundTransparency = 1
+        creatorsTitle.Text = "✨ Creadores Destacados"
+        creatorsTitle.Font = Enum.Font.GothamBold
+        creatorsTitle.TextSize = 22
+        creatorsTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
+        creatorsTitle.TextXAlignment = Enum.TextXAlignment.Left
+        creatorsTitle.LayoutOrder = 1
+        creatorsTitle.Parent = creatorsSection
+
+        local creatorsScroll = Instance.new("ScrollingFrame")
+        creatorsScroll.Size = UDim2.new(1, 0, 0, 180)
+        creatorsScroll.BackgroundTransparency = 1
+        creatorsScroll.BorderSizePixel = 0
+        creatorsScroll.ScrollBarThickness = 4
+        creatorsScroll.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        creatorsScroll.ScrollingDirection = Enum.ScrollingDirection.X
+        creatorsScroll.CanvasSize = UDim2.new(0, #verifiedUsers * 150, 0, 0)
+        creatorsScroll.LayoutOrder = 2
+        creatorsScroll.Parent = creatorsSection
+
+        local creatorsScrollLayout = Instance.new("UIListLayout")
+        creatorsScrollLayout.FillDirection = Enum.FillDirection.Horizontal
+        creatorsScrollLayout.Padding = UDim.new(0, 15)
+        creatorsScrollLayout.Parent = creatorsScroll
+
+        for i, creator in ipairs(verifiedUsers) do
+                local creatorCard = Instance.new("Frame")
+                creatorCard.Size = UDim2.new(0, 130, 0, 170)
+                creatorCard.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+                creatorCard.BorderSizePixel = 0
+                creatorCard.LayoutOrder = i
+                creatorCard.Parent = creatorsScroll
+
+                local creatorCardCorner = Instance.new("UICorner")
+                creatorCardCorner.CornerRadius = UDim.new(0, 15)
+                creatorCardCorner.Parent = creatorCard
+
+                local creatorCardLayout = Instance.new("UIListLayout")
+                creatorCardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                creatorCardLayout.Padding = UDim.new(0, 8)
+                creatorCardLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+                creatorCardLayout.Parent = creatorCard
+
+                local creatorCardPadding = Instance.new("UIPadding")
+                creatorCardPadding.PaddingTop = UDim.new(0, 15)
+                creatorCardPadding.Parent = creatorCard
+
+                -- Foto circular
+                local creatorImage = Instance.new("ImageLabel")
+                creatorImage.Size = UDim2.new(0, 80, 0, 80)
+                creatorImage.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+                creatorImage.Image = creator.thumbnail
+                creatorImage.LayoutOrder = 1
+                creatorImage.Parent = creatorCard
+
+                local creatorImageCorner = Instance.new("UICorner")
+                creatorImageCorner.CornerRadius = UDim.new(1, 0)
+                creatorImageCorner.Parent = creatorImage
+
+                -- Nombre
+                local creatorName = Instance.new("TextLabel")
+                creatorName.Size = UDim2.new(1, -10, 0, 20)
+                creatorName.BackgroundTransparency = 1
+                creatorName.Text = creator.username
+                creatorName.Font = Enum.Font.GothamBold
+                creatorName.TextSize = 14
+                creatorName.TextColor3 = Color3.fromRGB(0, 0, 0)
+                creatorName.TextTruncate = Enum.TextTruncate.AtEnd
+                creatorName.LayoutOrder = 2
+                creatorName.Parent = creatorCard
+
+                -- Botón seguir circular con +
+                local followBtn = Instance.new("TextButton")
+                followBtn.Name = "FollowButton"
+                followBtn.Size = UDim2.new(0, 40, 0, 40)
+                followBtn.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+                followBtn.Text = "+"
+                followBtn.Font = Enum.Font.GothamBold
+                followBtn.TextSize = 24
+                followBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                followBtn.BorderSizePixel = 0
+                followBtn.LayoutOrder = 3
+                followBtn.Parent = creatorCard
+
+                local followBtnCorner = Instance.new("UICorner")
+                followBtnCorner.CornerRadius = UDim.new(1, 0)
+                followBtnCorner.Parent = followBtn
+
+                -- Verificar si ya sigue
+                task.spawn(function()
+                        local success, profileData = pcall(function()
+                                return R.getUserProfileEvent:InvokeServer(creator.userId)
+                        end)
+
+                        if success and profileData and profileData.isFollowing then
+                                followBtn.Text = "✓"
+                                followBtn.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+                        end
+                end)
+
+                -- Evento de clic con animación
+                followBtn.MouseButton1Click:Connect(function()
+                        local isFollowing = (followBtn.Text == "✓")
+                        
+                        -- Animación de escala
+                        local originalSize = followBtn.Size
+                        followBtn:TweenSize(
+                                UDim2.new(0, 35, 0, 35),
+                                Enum.EasingDirection.Out,
+                                Enum.EasingStyle.Quad,
+                                0.1,
+                                true,
+                                function()
+                                        followBtn:TweenSize(
+                                                originalSize,
+                                                Enum.EasingDirection.Out,
+                                                Enum.EasingStyle.Bounce,
+                                                0.2,
+                                                true
+                                        )
+                                end
+                        )
+
+                        if isFollowing then
+                                -- Dejar de seguir
+                                local success = pcall(function()
+                                        return R.unfollowUserEvent:InvokeServer(creator.userId)
+                                end)
+                                if success then
+                                        followBtn.Text = "+"
+                                        followBtn.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+                                end
+                        else
+                                -- Seguir
+                                local success = pcall(function()
+                                        return R.followUserEvent:InvokeServer(creator.userId)
+                                end)
+                                if success then
+                                        followBtn.Text = "✓"
+                                        followBtn.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+                                end
+                        end
+                end)
+
+                -- Hacer el resto de la tarjeta clickeable para ver perfil
+                local clickArea = Instance.new("TextButton")
+                clickArea.Size = UDim2.new(1, 0, 1, -50)
+                clickArea.Position = UDim2.new(0, 0, 0, 0)
+                clickArea.BackgroundTransparency = 1
+                clickArea.Text = ""
+                clickArea.ZIndex = 2
+                clickArea.Parent = creatorCard
+
+                clickArea.MouseButton1Click:Connect(function()
+                        R.showUserProfile(creator.userId)
+                end)
+        end
+end
+
 -- Función para cargar secciones en página de inicio
 R.loadHomeSections = function()
         -- Limpiar secciones anteriores
@@ -844,28 +1150,31 @@ R.loadHomeSections = function()
                 end
         end
 
-        -- Sección 1: Artículos Destacados (del sistema)
+        -- Sección 1: Creadores Destacados (NUEVO)
+        R.createFeaturedCreators(R.homeSectionsContainer, 1)
+
+        -- Sección 2: Artículos Destacados (del sistema)
         if #systemArticles > 0 then
-                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 1)
+                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 2)
         end
 
-        -- Sección 2: Artículos Nuevos (últimos 5)
+        -- Sección 3: Artículos Nuevos (últimos 5)
         local newArticles = {}
         for i = 1, math.min(5, #userArticles) do
                 table.insert(newArticles, userArticles[i])
         end
         if #newArticles > 0 then
-                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 2)
+                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 3)
         end
 
-        -- Sección 3: Artículos Recientes
+        -- Sección 4: Artículos Recientes
         if #userArticles > 5 then
                 local recentArticles = {}
                 for i = 6, math.min(15, #userArticles) do
                         table.insert(recentArticles, userArticles[i])
                 end
                 if #recentArticles > 0 then
-                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 3)
+                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 4)
                 end
         end
 
@@ -875,9 +1184,15 @@ end
 
 R.runSearch = function(textBox)
         local query = textBox.Text
-        R.loadArticles(query)
         R.setInterfaceView("results")
         R.searchBoxHeader.Text = query
+        
+        -- Cargar según pestaña activa
+        if R.activeSearchTab == "music" then
+                R.loadMusic(query)
+        else
+                R.loadArticles(query)
+        end
 end
 
 R.loadAllArticles = function()

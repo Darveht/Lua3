@@ -200,108 +200,116 @@ R.resultsFrame.BorderSizePixel = 0
 R.resultsFrame.Visible = false
 R.resultsFrame.Parent = R.mainFrame
 
--- Header de resultados
-R.resultsHeader = Instance.new("Frame")
-R.resultsHeader.Size = UDim2.new(1, 0, 0, 65)
-R.resultsHeader.Position = UDim2.new(0, 0, 0, 0)
-R.resultsHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-R.resultsHeader.BorderSizePixel = 0
-R.resultsHeader.ZIndex = 2
-R.resultsHeader.Parent = R.resultsFrame
+local resultsLayout = Instance.new("UIListLayout")
+resultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+resultsLayout.Padding = UDim.new(0, 15)
+resultsLayout.Parent = R.resultsFrame
 
--- Botón volver al inicio (en resultados)
-R.homeButton = Instance.new("TextButton")
-R.homeButton.Size = UDim2.new(0, 35, 0, 35)
-R.homeButton.Position = UDim2.new(0, 12, 0.5, -17.5)
-R.homeButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-R.homeButton.Text = "🏠"
-R.homeButton.Font = Enum.Font.GothamBold
-R.homeButton.TextSize = 18
-R.homeButton.BorderSizePixel = 0
-R.homeButton.ZIndex = 3
-R.homeButton.Parent = R.resultsHeader
-
-local homeCorner = Instance.new("UICorner")
-homeCorner.CornerRadius = UDim.new(0, 17.5)
-homeCorner.Parent = R.homeButton
-
-R.logoHeader = Instance.new("TextLabel")
-R.logoHeader.Size = UDim2.new(0, 90, 1, 0)
-R.logoHeader.Position = UDim2.new(0, 58, 0, 0)
-R.logoHeader.BackgroundTransparency = 1
-R.logoHeader.Text = "Roogle"
-R.logoHeader.Font = Enum.Font.GothamBold
-R.logoHeader.TextSize = 26
-R.logoHeader.TextColor3 = Color3.fromRGB(66, 133, 244)
-R.logoHeader.TextXAlignment = Enum.TextXAlignment.Left
-R.logoHeader.Parent = R.resultsHeader
-
--- Barra de búsqueda en header
-R.searchContainerHeader = Instance.new("Frame")
-R.searchContainerHeader.Name = "SearchContainerHeader"
-R.searchContainerHeader.Size = UDim2.new(0, 450, 0, 38)
-R.searchContainerHeader.Position = UDim2.new(0, 165, 0.5, -19)
-R.searchContainerHeader.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-R.searchContainerHeader.BorderSizePixel = 0
-R.searchContainerHeader.ZIndex = 3
-R.searchContainerHeader.Parent = R.resultsHeader
-
-local searchCornerHeader = Instance.new("UICorner")
-searchCornerHeader.CornerRadius = UDim.new(0, 19)
-searchCornerHeader.Parent = R.searchContainerHeader
-
-local searchLayoutHeader = Instance.new("UIListLayout")
-searchLayoutHeader.FillDirection = Enum.FillDirection.Horizontal
-searchLayoutHeader.VerticalAlignment = Enum.VerticalAlignment.Center
-searchLayoutHeader.Parent = R.searchContainerHeader
-
-local searchIconHeader = Instance.new("TextLabel")
-searchIconHeader.Size = UDim2.new(0, 32, 1, 0)
-searchIconHeader.BackgroundTransparency = 1
-searchIconHeader.Text = "🔍"
-searchIconHeader.TextSize = 18
-searchIconHeader.ZIndex = 4
-searchIconHeader.Parent = R.searchContainerHeader
+local resultsPadding = Instance.new("UIPadding")
+resultsPadding.PaddingLeft = UDim.new(0, 30)
+resultsPadding.PaddingRight = UDim.new(0, 30)
+resultsPadding.PaddingTop = UDim.new(0, 100)
+resultsPadding.PaddingBottom = UDim.new(0, 30)
+resultsPadding.Parent = R.resultsFrame
 
 R.searchBoxHeader = Instance.new("TextBox")
 R.searchBoxHeader.Name = "SearchBoxHeader"
-R.searchBoxHeader.Size = UDim2.new(1, -64, 1, 0)
-R.searchBoxHeader.BackgroundTransparency = 1
+R.searchBoxHeader.Size = UDim2.new(1, 0, 0, 50)
+R.searchBoxHeader.BackgroundColor3 = Color3.fromRGB(245, 245, 245)
 R.searchBoxHeader.Text = ""
 R.searchBoxHeader.PlaceholderText = "Buscar..."
 R.searchBoxHeader.Font = Enum.Font.Gotham
-R.searchBoxHeader.TextSize = 15
+R.searchBoxHeader.TextSize = 18
 R.searchBoxHeader.TextColor3 = Color3.fromRGB(0, 0, 0)
 R.searchBoxHeader.TextXAlignment = Enum.TextXAlignment.Left
 R.searchBoxHeader.ClearTextOnFocus = false
-R.searchBoxHeader.ZIndex = 4
-R.searchBoxHeader.Parent = R.searchContainerHeader
+R.searchBoxHeader.BorderSizePixel = 0
+R.searchBoxHeader.LayoutOrder = 1
+R.searchBoxHeader.Parent = R.resultsFrame
+
+local searchHeaderCorner = Instance.new("UICorner")
+searchHeaderCorner.CornerRadius = UDim.new(0, 10)
+searchHeaderCorner.Parent = R.searchBoxHeader
+
+local searchHeaderPadding = Instance.new("UIPadding")
+searchHeaderPadding.PaddingLeft = UDim.new(0, 15)
+searchHeaderPadding.PaddingRight = UDim.new(0, 60)
+searchHeaderPadding.Parent = R.searchBoxHeader
 
 R.searchButtonHeader = Instance.new("TextButton")
-R.searchButtonHeader.Name = "SearchButtonHeader"
-R.searchButtonHeader.Size = UDim2.new(0, 32, 1, 0)
-R.searchButtonHeader.BackgroundTransparency = 1
-R.searchButtonHeader.Text = "→"
+R.searchButtonHeader.Size = UDim2.new(0, 40, 0, 40)
+R.searchButtonHeader.Position = UDim2.new(1, -45, 0.5, -20)
+R.searchButtonHeader.AnchorPoint = Vector2.new(0, 0)
+R.searchButtonHeader.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+R.searchButtonHeader.Text = "🔍"
 R.searchButtonHeader.Font = Enum.Font.GothamBold
 R.searchButtonHeader.TextSize = 20
-R.searchButtonHeader.TextColor3 = Color3.fromRGB(66, 133, 244)
-R.searchButtonHeader.ZIndex = 4
-R.searchButtonHeader.Parent = R.searchContainerHeader
+R.searchButtonHeader.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.searchButtonHeader.BorderSizePixel = 0
+R.searchButtonHeader.Parent = R.searchBoxHeader
 
--- Lista de resultados
+local searchBtnHeaderCorner = Instance.new("UICorner")
+searchBtnHeaderCorner.CornerRadius = UDim.new(1, 0)
+searchBtnHeaderCorner.Parent = R.searchButtonHeader
+
+-- PESTAÑAS DE BÚSQUEDA (Artículos / Música)
+local tabsContainer = Instance.new("Frame")
+tabsContainer.Size = UDim2.new(1, 0, 0, 50)
+tabsContainer.BackgroundTransparency = 1
+tabsContainer.LayoutOrder = 2
+tabsContainer.Parent = R.resultsFrame
+
+local tabsLayout = Instance.new("UIListLayout")
+tabsLayout.FillDirection = Enum.FillDirection.Horizontal
+tabsLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+tabsLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+tabsLayout.Padding = UDim.new(0, 10)
+tabsLayout.Parent = tabsContainer
+
+R.articlesTab = Instance.new("TextButton")
+R.articlesTab.Size = UDim2.new(0, 150, 0, 45)
+R.articlesTab.BackgroundColor3 = Color3.fromRGB(66, 133, 244)
+R.articlesTab.Text = "📚 Artículos"
+R.articlesTab.Font = Enum.Font.GothamBold
+R.articlesTab.TextSize = 16
+R.articlesTab.TextColor3 = Color3.fromRGB(255, 255, 255)
+R.articlesTab.BorderSizePixel = 0
+R.articlesTab.Parent = tabsContainer
+
+local articlesTabCorner = Instance.new("UICorner")
+articlesTabCorner.CornerRadius = UDim.new(0, 10)
+articlesTabCorner.Parent = R.articlesTab
+
+R.musicTab = Instance.new("TextButton")
+R.musicTab.Size = UDim2.new(0, 150, 0, 45)
+R.musicTab.BackgroundColor3 = Color3.fromRGB(200, 200, 200)
+R.musicTab.Text = "🎵 Música"
+R.musicTab.Font = Enum.Font.GothamBold
+R.musicTab.TextSize = 16
+R.musicTab.TextColor3 = Color3.fromRGB(100, 100, 100)
+R.musicTab.BorderSizePixel = 0
+R.musicTab.Parent = tabsContainer
+
+local musicTabCorner = Instance.new("UICorner")
+musicTabCorner.CornerRadius = UDim.new(0, 10)
+musicTabCorner.Parent = R.musicTab
+
+-- Variable para saber qué pestaña está activa
+R.activeSearchTab = "articles"
+
 R.resultsScrollFrame = Instance.new("ScrollingFrame")
 R.resultsScrollFrame.Name = "ResultsScrollFrame"
-R.resultsScrollFrame.Size = UDim2.new(1, 0, 1, -65)
-R.resultsScrollFrame.Position = UDim2.new(0, 0, 0, 65)
+R.resultsScrollFrame.Size = UDim2.new(1, 0, 1, -190)
 R.resultsScrollFrame.BackgroundTransparency = 1
 R.resultsScrollFrame.BorderSizePixel = 0
 R.resultsScrollFrame.ScrollBarThickness = 8
 R.resultsScrollFrame.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+R.resultsScrollFrame.LayoutOrder = 3
 R.resultsScrollFrame.Parent = R.resultsFrame
 
 R.resultsLayout = Instance.new("UIListLayout")
 R.resultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-R.resultsLayout.Padding = UDim.new(0, 0)
+R.resultsLayout.Padding = UDim.new(0, 15)
 R.resultsLayout.Parent = R.resultsScrollFrame
 
 local resultsPadding = Instance.new("UIPadding")
@@ -1431,4 +1439,3 @@ R.termsPanel.CanvasSize = UDim2.new(0, 0, 0, termsLayoutUI.AbsoluteContentSize.Y
 -- Señal de que este script terminó de cargar
 _G.RoogleCoreLoaded = true
 print("✓ Roogle Core (1/3) cargado: UI y variables listas.")
-
