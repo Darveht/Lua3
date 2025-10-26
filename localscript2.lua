@@ -44,28 +44,62 @@ R.loadHomeSections = function()
                 R.createFeaturedCreators(R.homeSectionsContainer, 1)
         end
 
-        -- Sección 2: Artículos Destacados (del sistema)
+        -- Sección 2: Músicas Destacadas (primeras 10 aprobadas)
+        task.spawn(function()
+                local success, musicList = pcall(function()
+                        return R.getMusicEvent:InvokeServer()
+                end)
+                if success and musicList and #musicList > 0 then
+                        local featuredMusic = {}
+                        for i = 1, math.min(10, #musicList) do
+                                table.insert(featuredMusic, musicList[i])
+                        end
+                        if R.createMusicHomeSection then
+                                R.createMusicHomeSection("🎵 Músicas Destacadas", featuredMusic, R.homeSectionsContainer, 2)
+                        end
+                end
+        end)
+
+        -- Sección 3: Músicas de Pago
+        task.spawn(function()
+                local success, musicList = pcall(function()
+                        return R.getMusicEvent:InvokeServer()
+                end)
+                if success and musicList then
+                        local paidMusic = {}
+                        for _, music in ipairs(musicList) do
+                                if music.price and music.price > 0 then
+                                        table.insert(paidMusic, music)
+                                end
+                        end
+                        if #paidMusic > 0 and R.createMusicHomeSection then
+                                R.createMusicHomeSection("💰 Músicas de Pago", paidMusic, R.homeSectionsContainer, 3)
+                        end
+                end
+        end)
+
+        -- Sección 4: Artículos Destacados (del sistema)
         if #systemArticles > 0 and R.createHomeSection then
-                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 2)
+                R.createHomeSection("⭐ Artículos Destacados", systemArticles, R.homeSectionsContainer, 4)
         end
 
-        -- Sección 3: Artículos Nuevos (últimos 5)
+        -- Sección 5: Artículos Nuevos (últimos 5)
         local newArticles = {}
         for i = 1, math.min(5, #userArticles) do
                 table.insert(newArticles, userArticles[i])
         end
         if #newArticles > 0 and R.createHomeSection then
-                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 3)
+                R.createHomeSection("🆕 Artículos Nuevos", newArticles, R.homeSectionsContainer, 5)
         end
 
-        -- Sección 4: Artículos Recientes
+        -- Sección 6: Artículos Recientes
         if #userArticles > 5 then
                 local recentArticles = {}
                 for i = 6, math.min(15, #userArticles) do
                         table.insert(recentArticles, userArticles[i])
                 end
                 if #recentArticles > 0 and R.createHomeSection then
-                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 4)
+                        R.createHomeSection("📚 Artículos Recientes", recentArticles, R.homeSectionsContainer, 6)
                 end
         end
 
@@ -578,6 +612,163 @@ R.showArticle = function(articleId)
         R.setInterfaceView("article")
 end
 
+-- Función para crear sección de música en inicio (horizontal)
+R.createMusicHomeSection = function(title, musicList, parent, layoutOrder)
+        if #musicList == 0 then return end
+
+        local sectionContainer = Instance.new("Frame")
+        sectionContainer.Size = UDim2.new(1, 0, 0, 240)
+        sectionContainer.BackgroundTransparency = 1
+        sectionContainer.LayoutOrder = layoutOrder
+        sectionContainer.Parent = parent
+
+        local sectionLayout = Instance.new("UIListLayout")
+        sectionLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        sectionLayout.Padding = UDim.new(0, 10)
+        sectionLayout.Parent = sectionContainer
+
+        -- Título de la sección
+        local sectionTitle = Instance.new("TextLabel")
+        sectionTitle.Size = UDim2.new(1, 0, 0, 30)
+        sectionTitle.BackgroundTransparency = 1
+        sectionTitle.Text = title
+        sectionTitle.Font = Enum.Font.GothamBold
+        sectionTitle.TextSize = 22
+        sectionTitle.TextColor3 = Color3.fromRGB(0, 0, 0)
+        sectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+        sectionTitle.LayoutOrder = 1
+        sectionTitle.Parent = sectionContainer
+
+        -- Scroll horizontal de música
+        local musicScroll = Instance.new("ScrollingFrame")
+        musicScroll.Size = UDim2.new(1, 0, 0, 200)
+        musicScroll.BackgroundTransparency = 1
+        musicScroll.BorderSizePixel = 0
+        musicScroll.ScrollBarThickness = 4
+        musicScroll.ScrollBarImageColor3 = Color3.fromRGB(200, 200, 200)
+        musicScroll.ScrollingDirection = Enum.ScrollingDirection.X
+        musicScroll.CanvasSize = UDim2.new(0, #musicList * 320, 0, 0)
+        musicScroll.LayoutOrder = 2
+        musicScroll.Parent = sectionContainer
+
+        local musicLayout = Instance.new("UIListLayout")
+        musicLayout.FillDirection = Enum.FillDirection.Horizontal
+        musicLayout.Padding = UDim.new(0, 15)
+        musicLayout.Parent = musicScroll
+
+        -- Crear tarjetas de música
+        for i, music in ipairs(musicList) do
+                local musicCard = Instance.new("TextButton")
+                musicCard.Size = UDim2.new(0, 300, 0, 170)
+                musicCard.BackgroundColor3 = Color3.fromRGB(250, 250, 250)
+                musicCard.BorderSizePixel = 0
+                musicCard.AutoButtonColor = false
+                musicCard.Text = ""
+                musicCard.LayoutOrder = i
+                musicCard.Parent = musicScroll
+
+                local cardCorner = Instance.new("UICorner")
+                cardCorner.CornerRadius = UDim.new(0, 10)
+                cardCorner.Parent = musicCard
+
+                local cardLayout = Instance.new("UIListLayout")
+                cardLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                cardLayout.Padding = UDim.new(0, 8)
+                cardLayout.Parent = musicCard
+
+                local cardPadding = Instance.new("UIPadding")
+                cardPadding.PaddingLeft = UDim.new(0, 15)
+                cardPadding.PaddingRight = UDim.new(0, 15)
+                cardPadding.PaddingTop = UDim.new(0, 15)
+                cardPadding.PaddingBottom = UDim.new(0, 15)
+                cardPadding.Parent = musicCard
+
+                -- Título con etiqueta de precio
+                local titleContainer = Instance.new("Frame")
+                titleContainer.Size = UDim2.new(1, 0, 0, 30)
+                titleContainer.BackgroundTransparency = 1
+                titleContainer.LayoutOrder = 1
+                titleContainer.Parent = musicCard
+
+                local titleLayout = Instance.new("UIListLayout")
+                titleLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                titleLayout.Padding = UDim.new(0, 5)
+                titleLayout.Parent = titleContainer
+
+                local cardTitle = Instance.new("TextLabel")
+                cardTitle.Size = UDim2.new(1, 0, 0, 0)
+                cardTitle.AutomaticSize = Enum.AutomaticSize.Y
+                cardTitle.BackgroundTransparency = 1
+                cardTitle.Text = "🎵 " .. music.name
+                cardTitle.Font = Enum.Font.GothamBold
+                cardTitle.TextSize = 18
+                cardTitle.TextColor3 = Color3.fromRGB(255, 87, 34)
+                cardTitle.TextXAlignment = Enum.TextXAlignment.Left
+                cardTitle.TextWrapped = true
+                cardTitle.LayoutOrder = 1
+                cardTitle.Parent = titleContainer
+
+                -- Etiqueta de precio verde
+                if music.price and music.price > 0 then
+                        local priceTag = Instance.new("Frame")
+                        priceTag.Size = UDim2.new(0, 80, 0, 22)
+                        priceTag.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+                        priceTag.LayoutOrder = 2
+                        priceTag.Parent = titleContainer
+
+                        local priceCorner = Instance.new("UICorner")
+                        priceCorner.CornerRadius = UDim.new(0, 6)
+                        priceCorner.Parent = priceTag
+
+                        local priceLabel = Instance.new("TextLabel")
+                        priceLabel.Size = UDim2.new(1, 0, 1, 0)
+                        priceLabel.BackgroundTransparency = 1
+                        priceLabel.Text = music.price .. " R$"
+                        priceLabel.Font = Enum.Font.GothamBold
+                        priceLabel.TextSize = 13
+                        priceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                        priceLabel.Parent = priceTag
+                end
+
+                -- Categoría
+                local categoryLabel = Instance.new("TextLabel")
+                categoryLabel.Size = UDim2.new(1, 0, 0, 18)
+                categoryLabel.BackgroundTransparency = 1
+                categoryLabel.Text = music.category
+                categoryLabel.Font = Enum.Font.Gotham
+                categoryLabel.TextSize = 14
+                categoryLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+                categoryLabel.TextXAlignment = Enum.TextXAlignment.Left
+                categoryLabel.LayoutOrder = 2
+                categoryLabel.Parent = musicCard
+
+                -- Autor
+                local authorLabel = Instance.new("TextLabel")
+                authorLabel.Size = UDim2.new(1, 0, 0, 18)
+                authorLabel.BackgroundTransparency = 1
+                authorLabel.Text = "Por " .. music.author
+                authorLabel.Font = Enum.Font.Gotham
+                authorLabel.TextSize = 13
+                authorLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+                authorLabel.TextXAlignment = Enum.TextXAlignment.Left
+                authorLabel.LayoutOrder = 3
+                authorLabel.Parent = musicCard
+
+                musicCard.MouseButton1Click:Connect(function()
+                        if music.price and music.price > 0 then
+                                local success, result = pcall(function()
+                                        return R.purchaseMusicEvent:InvokeServer(music.id)
+                                end)
+                                if success and result then
+                                        R.openMusicPlayer(music)
+                                end
+                        else
+                                R.openMusicPlayer(music)
+                        end
+                end)
+        end
+end
+
 -- Función para crear sección de artículos (horizontal)
 R.createHomeSection = function(title, articles, parent, layoutOrder)
         if #articles == 0 then return end
@@ -891,7 +1082,7 @@ R.openMusicPlayer = function(musicData)
         R.currentTimeLabel.Text = "0:00"
         R.totalTimeLabel.Text = "0:00"
         R.musicProgressBar.Size = UDim2.new(0, 0, 1, 0)
-        R.playPauseButton.Text = "▶"
+        R.playPauseButton.Text = "⏸"
 
         -- Crear nuevo Sound
         local sound = Instance.new("Sound")
@@ -899,6 +1090,9 @@ R.openMusicPlayer = function(musicData)
         sound.Volume = 0.5
         sound.Parent = game.SoundService
         R.currentSound = sound
+
+        -- Reproducir automáticamente
+        sound:Play()
 
         -- Cargar el audio
         sound.Loaded:Connect(function()
@@ -908,7 +1102,7 @@ R.openMusicPlayer = function(musicData)
                 R.totalTimeLabel.Text = string.format("%d:%02d", minutes, seconds)
         end)
 
-        -- Actualizar progreso en tiempo real
+        -- Actualizar progreso en tiempo real cada 0.05 segundos (más fluido)
         task.spawn(function()
                 while R.currentSound and R.musicPlayerPanel.Visible do
                         if R.currentSound.IsPlaying then
@@ -917,14 +1111,20 @@ R.openMusicPlayer = function(musicData)
                                 
                                 if total > 0 then
                                         local progress = current / total
-                                        R.musicProgressBar.Size = UDim2.new(progress, 0, 1, 0)
+                                        R.musicProgressBar:TweenSize(
+                                                UDim2.new(progress, 0, 1, 0),
+                                                Enum.EasingDirection.Out,
+                                                Enum.EasingStyle.Linear,
+                                                0.05,
+                                                true
+                                        )
                                         
                                         local minutes = math.floor(current / 60)
                                         local seconds = math.floor(current % 60)
                                         R.currentTimeLabel.Text = string.format("%d:%02d", minutes, seconds)
                                 end
                         end
-                        task.wait(0.1)
+                        task.wait(0.05)
                 end
         end)
 
@@ -998,17 +1198,51 @@ R.loadMusic = function(query)
                         musicCardPadding.PaddingBottom = UDim.new(0, 15)
                         musicCardPadding.Parent = musicCard
 
+                        -- Contenedor para título y precio
+                        local titleContainer = Instance.new("Frame")
+                        titleContainer.Size = UDim2.new(1, 0, 0, 24)
+                        titleContainer.BackgroundTransparency = 1
+                        titleContainer.LayoutOrder = 1
+                        titleContainer.Parent = musicCard
+
+                        local titleLayout = Instance.new("UIListLayout")
+                        titleLayout.FillDirection = Enum.FillDirection.Horizontal
+                        titleLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+                        titleLayout.Padding = UDim.new(0, 8)
+                        titleLayout.Parent = titleContainer
+
                         local musicTitle = Instance.new("TextButton")
-                        musicTitle.Size = UDim2.new(1, 0, 0, 24)
+                        musicTitle.Size = UDim2.new(0, 0, 0, 24)
+                        musicTitle.AutomaticSize = Enum.AutomaticSize.X
                         musicTitle.BackgroundTransparency = 1
-                        local priceText = (music.price and music.price > 0) and " 💰 " .. music.price .. " R$" or ""
-                        musicTitle.Text = "🎵 " .. music.name .. priceText
+                        musicTitle.Text = "🎵 " .. music.name
                         musicTitle.Font = Enum.Font.GothamBold
                         musicTitle.TextSize = 18
-                        musicTitle.TextColor3 = (music.price and music.price > 0) and Color3.fromRGB(255, 193, 7) or Color3.fromRGB(255, 87, 34)
+                        musicTitle.TextColor3 = Color3.fromRGB(255, 87, 34)
                         musicTitle.TextXAlignment = Enum.TextXAlignment.Left
-                        musicTitle.LayoutOrder = 1
-                        musicTitle.Parent = musicCard
+                        musicTitle.Parent = titleContainer
+
+                        -- Etiqueta de precio verde si es de pago
+                        if music.price and music.price > 0 then
+                                local priceTag = Instance.new("Frame")
+                                priceTag.Size = UDim2.new(0, 0, 0, 22)
+                                priceTag.AutomaticSize = Enum.AutomaticSize.X
+                                priceTag.BackgroundColor3 = Color3.fromRGB(76, 175, 80)
+                                priceTag.Parent = titleContainer
+
+                                local priceCorner = Instance.new("UICorner")
+                                priceCorner.CornerRadius = UDim.new(0, 6)
+                                priceCorner.Parent = priceTag
+
+                                local priceLabel = Instance.new("TextLabel")
+                                priceLabel.Size = UDim2.new(1, 0, 1, 0)
+                                priceLabel.BackgroundTransparency = 1
+                                priceLabel.Text = " " .. music.price .. " R$ "
+                                priceLabel.Font = Enum.Font.GothamBold
+                                priceLabel.TextSize = 13
+                                priceLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+                                priceLabel.Parent = priceTag
+                        end
                         
                         musicTitle.MouseButton1Click:Connect(function()
                                 -- Verificar si necesita pago

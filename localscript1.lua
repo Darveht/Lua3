@@ -576,7 +576,7 @@ R.creatorCloseButton.Size = UDim2.new(0, 45, 0, 45)
 R.creatorCloseButton.Position = UDim2.new(1, 0, 0, 0)
 R.creatorCloseButton.AnchorPoint = Vector2.new(1, 0)
 R.creatorCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-R.creatorCloseButton.Text = "✕"
+R.creatorCloseButton.Text = "X"
 R.creatorCloseButton.Font = Enum.Font.GothamBold
 R.creatorCloseButton.TextSize = 24
 R.creatorCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -793,7 +793,7 @@ if R.isAdmin then
         R.adminCloseButton.Position = UDim2.new(1, 0, 0, 0)
         R.adminCloseButton.AnchorPoint = Vector2.new(1, 0)
         R.adminCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-        R.adminCloseButton.Text = "✕"
+        R.adminCloseButton.Text = "X"
         R.adminCloseButton.Font = Enum.Font.GothamBold
         R.adminCloseButton.TextSize = 24
         R.adminCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -1134,29 +1134,15 @@ R.musicPlayerPanel.Visible = false
 R.musicPlayerPanel.ZIndex = 15
 R.musicPlayerPanel.Parent = R.mainFrame
 
-local playerLayout = Instance.new("UIListLayout")
-playerLayout.SortOrder = Enum.SortOrder.LayoutOrder
-playerLayout.Padding = UDim.new(0, 25)
-playerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-playerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-playerLayout.Parent = R.musicPlayerPanel
-
-local playerPadding = Instance.new("UIPadding")
-playerPadding.PaddingLeft = UDim.new(0, 40)
-playerPadding.PaddingRight = UDim.new(0, 40)
-playerPadding.PaddingTop = UDim.new(0, 60)
-playerPadding.PaddingBottom = UDim.new(0, 60)
-playerPadding.Parent = R.musicPlayerPanel
-
--- Botón cerrar reproductor
+-- Botón cerrar (X) arriba a la derecha
 R.closePlayerButton = Instance.new("TextButton")
-R.closePlayerButton.Size = UDim2.new(0, 50, 0, 50)
-R.closePlayerButton.Position = UDim2.new(1, -20, 0, 20)
+R.closePlayerButton.Size = UDim2.new(0, 60, 0, 60)
+R.closePlayerButton.Position = UDim2.new(1, -30, 0, 30)
 R.closePlayerButton.AnchorPoint = Vector2.new(1, 0)
 R.closePlayerButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-R.closePlayerButton.Text = "✕"
+R.closePlayerButton.Text = "X"
 R.closePlayerButton.Font = Enum.Font.GothamBold
-R.closePlayerButton.TextSize = 28
+R.closePlayerButton.TextSize = 32
 R.closePlayerButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 R.closePlayerButton.BorderSizePixel = 0
 R.closePlayerButton.ZIndex = 16
@@ -1165,6 +1151,22 @@ R.closePlayerButton.Parent = R.musicPlayerPanel
 local closePlayerCorner = Instance.new("UICorner")
 closePlayerCorner.CornerRadius = UDim.new(1, 0)
 closePlayerCorner.Parent = R.closePlayerButton
+
+-- Contenedor central con layout
+local playerCenterContainer = Instance.new("Frame")
+playerCenterContainer.Size = UDim2.new(0.8, 0, 0.6, 0)
+playerCenterContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+playerCenterContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+playerCenterContainer.BackgroundTransparency = 1
+playerCenterContainer.ZIndex = 15
+playerCenterContainer.Parent = R.musicPlayerPanel
+
+local playerLayout = Instance.new("UIListLayout")
+playerLayout.SortOrder = Enum.SortOrder.LayoutOrder
+playerLayout.Padding = UDim.new(0, 25)
+playerLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+playerLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+playerLayout.Parent = playerCenterContainer
 
 -- Nombre de la música
 R.musicPlayerTitle = Instance.new("TextLabel")
@@ -1176,7 +1178,7 @@ R.musicPlayerTitle.TextSize = 32
 R.musicPlayerTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 R.musicPlayerTitle.LayoutOrder = 1
 R.musicPlayerTitle.ZIndex = 16
-R.musicPlayerTitle.Parent = R.musicPlayerPanel
+R.musicPlayerTitle.Parent = playerCenterContainer
 
 -- Categoría
 R.musicPlayerCategory = Instance.new("TextLabel")
@@ -1188,7 +1190,7 @@ R.musicPlayerCategory.TextSize = 18
 R.musicPlayerCategory.TextColor3 = Color3.fromRGB(180, 180, 180)
 R.musicPlayerCategory.LayoutOrder = 2
 R.musicPlayerCategory.ZIndex = 16
-R.musicPlayerCategory.Parent = R.musicPlayerPanel
+R.musicPlayerCategory.Parent = playerCenterContainer
 
 -- Barra de progreso
 local progressContainer = Instance.new("Frame")
@@ -1196,7 +1198,7 @@ progressContainer.Size = UDim2.new(1, 0, 0, 60)
 progressContainer.BackgroundTransparency = 1
 progressContainer.LayoutOrder = 3
 progressContainer.ZIndex = 16
-progressContainer.Parent = R.musicPlayerPanel
+progressContainer.Parent = playerCenterContainer
 
 local progressLayout = Instance.new("UIListLayout")
 progressLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1270,7 +1272,7 @@ R.playPauseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
 R.playPauseButton.BorderSizePixel = 0
 R.playPauseButton.LayoutOrder = 4
 R.playPauseButton.ZIndex = 16
-R.playPauseButton.Parent = R.musicPlayerPanel
+R.playPauseButton.Parent = playerCenterContainer
 
 local playPauseCorner = Instance.new("UICorner")
 playPauseCorner.CornerRadius = UDim.new(1, 0)
@@ -1326,7 +1328,7 @@ R.settingsCloseButton.Size = UDim2.new(0, 45, 0, 45)
 R.settingsCloseButton.Position = UDim2.new(1, 0, 0, 0)
 R.settingsCloseButton.AnchorPoint = Vector2.new(1, 0)
 R.settingsCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-R.settingsCloseButton.Text = "✕"
+R.settingsCloseButton.Text = "X"
 R.settingsCloseButton.Font = Enum.Font.GothamBold
 R.settingsCloseButton.TextSize = 24
 R.settingsCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
@@ -1542,7 +1544,7 @@ R.termsCloseButton.Size = UDim2.new(0, 45, 0, 45)
 R.termsCloseButton.Position = UDim2.new(1, 0, 0, 0)
 R.termsCloseButton.AnchorPoint = Vector2.new(1, 0)
 R.termsCloseButton.BackgroundColor3 = Color3.fromRGB(240, 240, 240)
-R.termsCloseButton.Text = "✕"
+R.termsCloseButton.Text = "X"
 R.termsCloseButton.Font = Enum.Font.GothamBold
 R.termsCloseButton.TextSize = 24
 R.termsCloseButton.TextColor3 = Color3.fromRGB(100, 100, 100)
