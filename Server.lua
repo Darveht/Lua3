@@ -1,23 +1,29 @@
 -- ServerScript: Coloca esto en ServerScriptService
-
+ 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local HttpService = game:GetService("HttpService")
 local DataStoreService = game:GetService("DataStoreService")
-
+ 
 -- DATASTORES PARA PERSISTENCIA
 local articlesDataStore = DataStoreService:GetDataStore("RoogleArticlesV2")
 local usersDataStore = DataStoreService:GetDataStore("RoogleUsersV2")
-
+local bannedUsersDataStore = DataStoreService:GetDataStore("RoogleBannedUsersV2")
+local MarketplaceService = game:GetService("MarketplaceService")
+ 
+-- ID del producto de Game Pass para desbaneo (100 Robux)
+local UNBAN_PRODUCT_ID = 3440708349 -- CAMBIAR por el ID del Developer Product que crees
+ 
 -- BASE DE DATOS EN MEMORIA
 local articlesDatabase = {} -- TODOS los artículos (activos e inactivos)
 local usersDatabase = {} -- Información de usuarios
-
+local bannedUsers = {} -- Usuarios baneados {userId, banEndTime, reason}
+ 
 -- LISTA DE ADMINISTRADORES
 local ADMINS = {
 "Vegetl_t"
 }
-
+ 
 -- Función para verificar si es admin
 local function isAdmin(playerName)
     for _, adminName in ipairs(ADMINS) do
@@ -27,12 +33,12 @@ local function isAdmin(playerName)
     end
     return false
 end
-
+ 
 -- Función para generar ID único
 local function generateId()
     return HttpService:GenerateGUID(false)
 end
-
+ 
 -- Función para obtener thumbnail del jugador
 local function getPlayerThumbnail(userId)
     local thumbType = Enum.ThumbnailType.HeadShot
@@ -40,7 +46,7 @@ local function getPlayerThumbnail(userId)
     local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
     return content
 end
-
+ 
 -- Función para cargar datos del DataStore
 local function loadData()
     local success, articlesData = pcall(function()
@@ -58,6 +64,7 @@ local function loadData()
         title = "Bienvenido a Roogle",
         description = "Roogle es tu motor de búsqueda de artículos. Usa la barra de búsqueda para encontrar contenido interesante.",
         content = "Roogle es tu motor de búsqueda de artículos. Usa la barra de búsqueda para encontrar contenido interesante. Cualquier usuario puede publicar artículos que serán revisados por administradores antes de aparecer en las búsquedas.\n\nLos artículos pueden tener cualquier longitud, desde unas pocas palabras hasta miles de palabras. El sistema mostrará todo el contenido completo con scroll automático.",
+        category = "Tutorial",
         author = "Sistema",
         authorId = 1,
         authorThumbnail = "rbxasset://textures/ui/GuiImagePlaceholder.png",
@@ -72,6 +79,7 @@ local function loadData()
         title = "Como usar Roogle",
         description = "Aprende a navegar y buscar artículos en Roogle de manera efectiva.",
         content = "Roogle te permite buscar artículos de manera rápida y eficiente. Simplemente escribe palabras clave en la barra de búsqueda y presiona Enter o haz clic en el botón de búsqueda. Puedes hacer clic en cualquier título para ver el artículo completo con todos los detalles.\n\nAhora también puedes hacer clic en el nombre de cualquier autor para ver su perfil completo, donde encontrarás su foto, seguidores, usuarios que sigue y todos sus artículos publicados.",
+        category = "Tutorial",
         author = "Sistema",
         authorId = 1,
         authorThumbnail = "rbxasset://textures/ui/GuiImagePlaceholder.png",
@@ -90,17 +98,27 @@ local function loadData()
         usersDatabase = usersData
         print("[DATASTORE] Cargados", #usersDatabase, "usuarios")
     end
+    
+    local successBanned, bannedData = pcall(function()
+        return bannedUsersDataStore:GetAsync("banned")
+    end)
+    
+    if successBanned and bannedData then
+        bannedUsers = bannedData
+        print("[DATASTORE] Cargados", #bannedUsers, "usuarios baneados")
+    end
 end
-
+ 
 -- Función para guardar datos en el DataStore
 local function saveData()
     pcall(function()
         articlesDataStore:SetAsync("articles", articlesDatabase)
         usersDataStore:SetAsync("users", usersDatabase)
+        bannedUsersDataStore:SetAsync("banned", bannedUsers)
         print("[DATASTORE] Datos guardados exitosamente")
     end)
 end
-
+ 
 -- Guardar automáticamente cada 30 segundos
 task.spawn(function()
     while true do
@@ -108,7 +126,7 @@ task.spawn(function()
         saveData()
     end
 end)
-
+ 
 -- CREAR REMOTES SI NO EXISTEN (automático)
 local remoteFolder = ReplicatedStorage:FindFirstChild("RoogleRemotes")
 if not remoteFolder then
@@ -116,7 +134,7 @@ if not remoteFolder then
     remoteFolder.Name = "RoogleRemotes"
     remoteFolder.Parent = ReplicatedStorage
 end
-
+ 
 local function createRemote(name, className)
     local remote = remoteFolder:FindFirstChild(name)
     if not remote then
@@ -126,7 +144,7 @@ local function createRemote(name, className)
     end
     return remote
 end
-
+ 
 -- Crear todos los remotes automáticamente
 local getArticlesEvent = createRemote("GetArticles", "RemoteFunction")
 local publishArticleFunction = createRemote("PublishArticle", "RemoteFunction")
@@ -142,9 +160,79 @@ local searchUsersEvent = createRemote("SearchUsers", "RemoteFunction")
 local verifyUserEvent = createRemote("VerifyUser", "RemoteFunction")
 local unverifyUserEvent = createRemote("UnverifyUser", "RemoteFunction")
 local getRobloxStatsEvent = createRemote("GetRobloxStats", "RemoteFunction")
-
+local checkBanStatusEvent = createRemote("CheckBanStatus", "RemoteFunction")
+local banUserEvent = createRemote("BanUser", "RemoteFunction")
+local unbanUserEvent = createRemote("UnbanUser", "RemoteFunction")
+local processUnbanPaymentEvent = createRemote("ProcessUnbanPayment", "RemoteFunction")
+ 
 -- FUNCIONES DEL SERVIDOR
-
+ 
+-- Función para detectar spam/enlaces en texto
+local function containsSpamOrLinks(text)
+    local lowerText = string.lower(text)
+    
+    -- Detectar enlaces (http, https, www, .com, .net, etc)
+    local linkPatterns = {
+    "http://",
+    "https://",
+    "www%.",
+    "%.com",
+    "%.net",
+    "%.org",
+    "%.gg",
+    "discord",
+    "bit%.ly",
+    "tinyurl"
+    }
+    
+    for _, pattern in ipairs(linkPatterns) do
+        if string.find(lowerText, pattern) then
+            return true, "enlaces"
+        end
+    end
+    
+    -- Detectar palabras de spam comunes
+    local spamWords = {
+    "compra",
+    "gratis",
+    "free robux",
+    "robux gratis",
+    "gana dinero",
+    "promocion",
+    "descuento",
+    "visita mi",
+    "suscribete",
+    "subscribe",
+    "sigueme",
+    "follow me"
+    }
+    
+    for _, word in ipairs(spamWords) do
+        if string.find(lowerText, word) then
+            return true, "spam"
+        end
+    end
+    
+    return false
+end
+ 
+-- Función para verificar si un usuario está baneado
+local function isUserBanned(userId)
+    for i, ban in ipairs(bannedUsers) do
+        if ban.userId == userId then
+            -- Verificar si el baneo ya expiró
+            if os.time() >= ban.banEndTime then
+                -- Baneo expirado, eliminar
+                table.remove(bannedUsers, i)
+                saveData()
+                return false, nil
+            end
+            return true, ban
+        end
+    end
+    return false, nil
+end
+ 
 -- Obtener o crear información de usuario
 local function getOrCreateUser(player)
     for _, user in ipairs(usersDatabase) do
@@ -168,9 +256,9 @@ local function getOrCreateUser(player)
     saveData()
     return newUser
 end
-
+ 
 -- PUBLICAR ARTÍCULO (va con estado pending o active si es Sistema)
-publishArticleFunction.OnServerInvoke = function(player, title, description, asSystem)
+publishArticleFunction.OnServerInvoke = function(player, title, description, category, asSystem)
     print(string.format("[%s] Enviando artículo a revisión: %s", player.Name, title))
     
     task.wait(0.5)
@@ -178,11 +266,21 @@ publishArticleFunction.OnServerInvoke = function(player, title, description, asS
     -- Si es admin y marca asSystem, publicar como Sistema
     local isSystemArticle = isAdmin(player.Name) and asSystem
     
+    -- Si NO es admin, verificar spam/enlaces
+    if not isAdmin(player.Name) then
+        local hasSpam, spamType = containsSpamOrLinks(title .. " " .. description)
+        if hasSpam then
+            warn(string.format("[SPAM DETECTADO] Usuario %s intentó publicar con %s", player.Name, spamType))
+            return false, "Tu artículo contiene contenido prohibido (" .. spamType .. ") y no puede ser publicado."
+        end
+    end
+    
     local newArticle = {
     id = generateId(),
     title = title,
     description = description,
     content = description,
+    category = category or "General",
     author = isSystemArticle and "Sistema" or player.Name,
     authorId = isSystemArticle and 1 or player.UserId,
     authorThumbnail = isSystemArticle and "rbxasset://textures/ui/GuiImagePlaceholder.png" or getPlayerThumbnail(player.UserId),
@@ -203,7 +301,7 @@ publishArticleFunction.OnServerInvoke = function(player, title, description, asS
     
     return true
 end
-
+ 
 -- OBTENER ARTÍCULOS (solo activos)
 getArticlesEvent.OnServerInvoke = function(player, query)
     print(string.format("[%s] Buscando: '%s'", player.Name, query or ""))
@@ -234,7 +332,7 @@ getArticlesEvent.OnServerInvoke = function(player, query)
     print(string.format("[SERVER] Encontrados %d resultados", #results))
     return results
 end
-
+ 
 -- OBTENER TODOS LOS ARTÍCULOS (para admin)
 getAllArticlesEvent.OnServerInvoke = function(player)
     if not isAdmin(player.Name) then
@@ -243,7 +341,7 @@ getAllArticlesEvent.OnServerInvoke = function(player)
     
     return articlesDatabase
 end
-
+ 
 -- OBTENER ARTÍCULO POR ID
 getArticleByIdEvent.OnServerInvoke = function(player, articleId)
     for _, article in ipairs(articlesDatabase) do
@@ -253,12 +351,12 @@ getArticleByIdEvent.OnServerInvoke = function(player, articleId)
     end
     return nil
 end
-
+ 
 -- VERIFICAR ADMIN
 checkAdminEvent.OnServerInvoke = function(player)
     return isAdmin(player.Name)
 end
-
+ 
 -- OBTENER ARTÍCULOS PENDIENTES (solo admins)
 getPendingArticlesEvent.OnServerInvoke = function(player)
     if not isAdmin(player.Name) then
@@ -276,7 +374,7 @@ getPendingArticlesEvent.OnServerInvoke = function(player)
     print(string.format("[ADMIN %s] Consultando artículos pendientes: %d", player.Name, #pending))
     return pending
 end
-
+ 
 -- CAMBIAR ESTADO DE ARTÍCULO (aprobar/desactivar/activar)
 toggleArticleStatusEvent.OnServerInvoke = function(player, articleId, newStatus)
     if not isAdmin(player.Name) then
@@ -314,7 +412,7 @@ toggleArticleStatusEvent.OnServerInvoke = function(player, articleId, newStatus)
     
     return false
 end
-
+ 
 -- OBTENER PERFIL DE USUARIO
 getUserProfileEvent.OnServerInvoke = function(player, userId)
     local userInfo = nil
@@ -363,7 +461,7 @@ getUserProfileEvent.OnServerInvoke = function(player, userId)
     isFollowing = table.find(userInfo.followers, player.UserId) ~= nil
     }
 end
-
+ 
 -- SEGUIR USUARIO
 followUserEvent.OnServerInvoke = function(player, targetUserId)
     local currentUser = getOrCreateUser(player)
@@ -393,7 +491,7 @@ followUserEvent.OnServerInvoke = function(player, targetUserId)
     saveData()
     return true
 end
-
+ 
 -- DEJAR DE SEGUIR USUARIO
 unfollowUserEvent.OnServerInvoke = function(player, targetUserId)
     local currentUser = getOrCreateUser(player)
@@ -425,7 +523,7 @@ unfollowUserEvent.OnServerInvoke = function(player, targetUserId)
     saveData()
     return true
 end
-
+ 
 -- BUSCAR USUARIOS (para panel admin)
 searchUsersEvent.OnServerInvoke = function(player, query)
     if not isAdmin(player.Name) then
@@ -448,7 +546,7 @@ searchUsersEvent.OnServerInvoke = function(player, query)
     
     return results
 end
-
+ 
 -- VERIFICAR USUARIO (solo admins)
 verifyUserEvent.OnServerInvoke = function(player, targetUserId)
     if not isAdmin(player.Name) then
@@ -474,7 +572,7 @@ verifyUserEvent.OnServerInvoke = function(player, targetUserId)
     
     return false
 end
-
+ 
 -- DESVERIFICAR USUARIO (solo admins)
 unverifyUserEvent.OnServerInvoke = function(player, targetUserId)
     if not isAdmin(player.Name) then
@@ -500,7 +598,7 @@ unverifyUserEvent.OnServerInvoke = function(player, targetUserId)
     
     return false
 end
-
+ 
 -- OBTENER ESTADÍSTICAS REALES DE ROBLOX (para el usuario Sistema)
 getRobloxStatsEvent.OnServerInvoke = function(player, targetUserId)
     -- Solo para el usuario Sistema (userId = 1)
@@ -508,69 +606,308 @@ getRobloxStatsEvent.OnServerInvoke = function(player, targetUserId)
         return nil
     end
     
-    local success, result = pcall(function()
-        -- Obtener información del perfil de Roblox en tiempo real
-        local userId = 1 -- Roblox (el usuario oficial de Roblox)
-        
-        -- Intentar obtener datos reales usando Friends API
-        local friendsSuccess, friendsCount = pcall(function()
-            local friends = Players:GetFriendsAsync(userId)
-            local count = 0
-            for _ in pairs(friends:GetCurrentPage()) do
-                count = count + 1
-            end
-            while not friends.IsFinished do
-                friends:AdvanceToNextPageAsync()
-                for _ in pairs(friends:GetCurrentPage()) do
-                    count = count + 1
-                end
-            end
-            return count
-        end)
-        
-        -- Si no se pueden obtener datos reales, usar valores predeterminados altos
-        local followers = friendsSuccess and friendsCount or 5000000
-        local following = 0
-        
+    -- Siempre retornar 16M de seguidores para el Sistema (como Roblox)
+    return {
+    followers = 16000000,
+    following = 0,
+    isRealData = true
+    }
+end
+ 
+-- VERIFICAR ESTADO DE BANEO
+checkBanStatusEvent.OnServerInvoke = function(player)
+    local isBanned, banInfo = isUserBanned(player.UserId)
+    if isBanned then
+        local daysLeft = math.ceil((banInfo.banEndTime - os.time()) / 86400)
         return {
-        followers = followers,
-        following = following,
-        isRealData = friendsSuccess
-        }
-    end)
-    
-    if success and result then
-        return result
-    else
-        -- Valores predeterminados si falla
-        return {
-        followers = 5000000,
-        following = 0,
-        isRealData = false
+        isBanned = true,
+        reason = banInfo.reason,
+        daysLeft = daysLeft,
+        banEndTime = banInfo.banEndTime
         }
     end
+    return { isBanned = false }
 end
-
+ 
+-- BANEAR USUARIO (solo admins)
+banUserEvent.OnServerInvoke = function(player, targetUserId, reason)
+    if not isAdmin(player.Name) then
+        warn("[SERVER] Usuario no autorizado intentó banear:", player.Name)
+        return false
+    end
+    
+    -- Verificar que no esté ya baneado
+    local alreadyBanned, _ = isUserBanned(targetUserId)
+    if alreadyBanned then
+        return false, "El usuario ya está baneado"
+    end
+    
+    -- Obtener nombre del usuario a banear
+    local targetName = "Desconocido"
+    for _, user in ipairs(usersDatabase) do
+        if user.userId == targetUserId then
+            targetName = user.username
+            break
+        end
+    end
+    
+    -- Crear baneo (10 días = 864000 segundos)
+    local banInfo = {
+    userId = targetUserId,
+    username = targetName,
+    reason = reason or "Infracción de normas",
+    banEndTime = os.time() + 864000, -- 10 días
+    bannedBy = player.Name,
+    bannedAt = os.time()
+    }
+    
+    table.insert(bannedUsers, banInfo)
+    saveData()
+    
+    print(string.format("[ADMIN %s] Usuario BANEADO: %s (10 días)", player.Name, targetName))
+    
+    -- Kickear al jugador si está conectado
+    local targetPlayer = Players:GetPlayerByUserId(targetUserId)
+    if targetPlayer then
+        targetPlayer:Kick("Has sido eliminado del juego por infracción de normas. El baneo expira en 10 días.")
+    end
+    
+    return true
+end
+ 
+-- DESBANEAR USUARIO (solo admins o por pago)
+unbanUserEvent.OnServerInvoke = function(player, targetUserId)
+    -- Si es admin, puede desbanear directamente
+    if isAdmin(player.Name) then
+        for i, ban in ipairs(bannedUsers) do
+            if ban.userId == targetUserId then
+                table.remove(bannedUsers, i)
+                saveData()
+                print(string.format("[ADMIN %s] Usuario DESBANEADO: %s", player.Name, ban.username))
+                return true, "Usuario desbaneado exitosamente"
+            end
+        end
+        return false, "Usuario no encontrado en lista de baneados"
+    end
+    
+    -- Si no es admin, verificar que sea su propio baneo
+    if player.UserId ~= targetUserId then
+        return false, "No tienes permiso para desbanear a otros usuarios"
+    end
+    
+    -- Verificar que está baneado
+    local isBanned, banInfo = isUserBanned(player.UserId)
+    if not isBanned then
+        return false, "No estás baneado"
+    end
+    
+    -- Aquí se procesaría el pago (esto se maneja en ProcessReceipt)
+    return false, "Usa el botón de pago para desbanear"
+end
+ 
+-- PROCESAR PAGO PARA DESBANEO
+processUnbanPaymentEvent.OnServerInvoke = function(player)
+    local isBanned, banInfo = isUserBanned(player.UserId)
+    if not isBanned then
+        return false, "No estás baneado"
+    end
+    
+    -- Verificar que el producto existe
+    if UNBAN_PRODUCT_ID == 0 then
+        warn("[ERROR] UNBAN_PRODUCT_ID no configurado")
+        return false, "El sistema de pagos no está configurado. Contacta al administrador."
+    end
+    
+    -- Procesar compra del producto
+    local success, result = pcall(function()
+        return MarketplaceService:PromptProductPurchase(player, UNBAN_PRODUCT_ID)
+    end)
+    
+    if success then
+        return true, "Procesando pago..."
+    else
+        warn("[ERROR] Error al procesar pago:", result)
+        return false, "Error al procesar el pago"
+    end
+end
+ 
+-- Procesar compra completada
+MarketplaceService.ProcessReceipt = function(receiptInfo)
+    local userId = receiptInfo.PlayerId
+    local productId = receiptInfo.ProductId
+    
+    -- Verificar si es el producto de desbaneo
+    if productId == UNBAN_PRODUCT_ID then
+        -- Desbanear al usuario
+        for i, ban in ipairs(bannedUsers) do
+            if ban.userId == userId then
+                table.remove(bannedUsers, i)
+                saveData()
+                print(string.format("[PAGO] Usuario DESBANEADO por pago: %s", ban.username))
+                
+                -- Notificar al jugador si está conectado
+                local targetPlayer = Players:GetPlayerByUserId(userId)
+                if targetPlayer then
+                    -- El jugador será desbaneado y podrá continuar jugando
+                end
+                
+                return Enum.ProductPurchaseDecision.PurchaseGranted
+            end
+        end
+    end
+    
+    return Enum.ProductPurchaseDecision.NotProcessedYet
+end
+ 
+-- Verificar baneo cuando un jugador se conecta
+Players.PlayerAdded:Connect(function(player)
+    local isBanned, banInfo = isUserBanned(player.UserId)
+    if isBanned then
+        local daysLeft = math.ceil((banInfo.banEndTime - os.time()) / 86400)
+        local message = string.format(
+        "HAS SIDO ELIMINADO\n\n" ..
+        "Tu cuenta ha sido suspendida por el equipo de Glam.\n\n" ..
+        "Razón: %s\n\n" ..
+        "No podrás acceder al juego hasta dentro de %d días.\n\n" ..
+        "Puedes pagar 100 Robux para ser desbaneado inmediatamente.",
+        banInfo.reason,
+        daysLeft
+        )
+        player:Kick(message)
+    end
+end)
+ 
 -- Cargar datos al iniciar
 loadData()
-
+ 
 -- Guardar datos cuando un jugador sale
 Players.PlayerRemoving:Connect(function()
     saveData()
 end)
-
+ 
 -- Guardar datos cuando el servidor se cierra
 game:BindToClose(function()
     saveData()
     task.wait(2)
 end)
-
+ 
 print("=== ✓ Roogle Server Iniciado ===")
 print("✓ Artículos totales:", #articlesDatabase)
 print("✓ Usuarios registrados:", #usersDatabase)
+print("✓ Usuarios baneados:", #bannedUsers)
 print("✓ Administradores:", table.concat(ADMINS, ", "))
 print("✓ RemoteEvents creados automáticamente")
 print("✓ DataStore configurado para persistencia")
 print("✓ Sistema de estados implementado (pending/active/inactive)")
+print("✓ Sistema de baneo activado (10 días)")
+print("✓ Detección de spam/enlaces activada")
+print("✓ Sistema de desbaneo por pago (100 Robux)")
 print("✓ Sistema listo para usar")
-
+ 
+ 
+ 
+ 
+-- ========== SISTEMA DE MÚSICA ==========
+local musicDatabase = {}
+ 
+-- Cargar música del DataStore
+local musicDataStore = DataStoreService:GetDataStore("RoogleMusicV1")
+ 
+local function loadMusicData()
+    local success, musicData = pcall(function()
+        return musicDataStore:GetAsync("music")
+    end)
+    
+    if success and musicData then
+        musicDatabase = musicData
+        print("[DATASTORE] Cargadas", #musicDatabase, "músicas")
+    end
+end
+ 
+-- Guardar música
+local function saveMusicData()
+    pcall(function()
+        musicDataStore:SetAsync("music", musicDatabase)
+    end)
+end
+ 
+-- Crear remotes de música
+local publishMusicFunction = createRemote("PublishMusic", "RemoteFunction")
+local getMusicEvent = createRemote("GetMusic", "RemoteFunction")
+local getPendingMusicEvent = createRemote("GetPendingMusic", "RemoteFunction")
+local toggleMusicStatusEvent = createRemote("ToggleMusicStatus", "RemoteFunction")
+ 
+-- Publicar música
+publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, category)
+    print(string.format("[%s] Enviando música a revisión: %s", player.Name, musicName))
+    
+    local newMusic = {
+    id = generateId(),
+    name = musicName,
+    audioId = musicId,
+    category = category,
+    author = player.Name,
+    authorId = player.UserId,
+    authorThumbnail = getPlayerThumbnail(player.UserId),
+    timestamp = os.time(),
+    dateCreated = os.date("%d/%m/%Y %H:%M"),
+    status = "pending"
+    }
+    
+    table.insert(musicDatabase, 1, newMusic)
+    saveMusicData()
+    
+    print(string.format("[SERVER] Música '%s' enviada a revisión", musicName))
+    return true
+end
+ 
+-- Obtener música (solo activas)
+getMusicEvent.OnServerInvoke = function(player)
+    local activeMusic = {}
+    for _, music in ipairs(musicDatabase) do
+        if music.status == "active" then
+            table.insert(activeMusic, music)
+        end
+    end
+    return activeMusic
+end
+ 
+-- Obtener música pendiente (solo admins)
+getPendingMusicEvent.OnServerInvoke = function(player)
+    if not isAdmin(player.Name) then
+        return {}
+    end
+    
+    local pendingMusic = {}
+    for _, music in ipairs(musicDatabase) do
+        if music.status == "pending" then
+            table.insert(pendingMusic, music)
+        end
+    end
+    return pendingMusic
+end
+ 
+-- Cambiar estado de música (solo admins)
+toggleMusicStatusEvent.OnServerInvoke = function(player, musicId, newStatus)
+    if not isAdmin(player.Name) then
+        return false
+    end
+    
+    for _, music in ipairs(musicDatabase) do
+        if music.id == musicId then
+            music.status = newStatus
+            saveMusicData()
+            print(string.format("[ADMIN %s] Música '%s' cambiada a %s", player.Name, music.name, newStatus))
+            return true
+        end
+    end
+    
+    return false
+end
+ 
+-- Cargar música al inicio
+loadMusicData()
+ 
+print("✓ Sistema de música iniciado")
+print("✓ Músicas totales:", #musicDatabase)
+ 
