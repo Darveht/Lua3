@@ -1,77 +1,117 @@
 
-# 🎵 Sistema de Música con Pagos - Configuración
+# 🎵 Sistema de Música con Pagos - Configuración Automática
 
-## ⚠️ IMPORTANTE: Configuración de Developer Products
-
-Para que las músicas de pago funcionen, necesitas crear Developer Products en Roblox.
+## ⚠️ CONFIGURACIÓN INICIAL REQUERIDA
 
 ### Paso 1: Crear Developer Products
 
-1. Ve a https://create.roblox.com
-2. Selecciona tu juego
-3. Ve a "Monetization" > "Passes & Products"
-4. Click en "Create a Product"
-5. Crea productos para diferentes precios (ej: 10, 25, 50, 100 Robux)
-6. Copia los IDs de cada producto
+Ve a https://create.roblox.com y crea los siguientes Developer Products:
 
-### Paso 2: Configurar Músicas de Pago
+1. **Música 10 Robux** - Precio: 10 Robux
+2. **Música 25 Robux** - Precio: 25 Robux
+3. **Música 50 Robux** - Precio: 50 Robux
+4. **Música 100 Robux** - Precio: 100 Robux
+5. **Música 250 Robux** - Precio: 250 Robux
+6. **Música 500 Robux** - Precio: 500 Robux
 
-Como **administrador**, cuando apruebes una música de pago:
+### Paso 2: Configurar IDs en Server.lua
 
-1. Abre `Server.lua` en ServerScriptService
-2. Busca la música en `musicDatabase`
-3. Agrega manualmente el `productId` correspondiente al precio
-4. Ejemplo:
-```lua
--- En la consola de admin o modificando directamente:
-music.productId = 1234567890  -- ID del Developer Product
-```
-
-### Paso 3: Sistema Automático (Opcional)
-
-Para automatizar esto, puedes crear una tabla de precios:
+Abre `Server.lua` y busca la sección `MUSIC_PRODUCTS` (alrededor de la línea 550):
 
 ```lua
 local MUSIC_PRODUCTS = {
-    [10] = 1234567890,   -- 10 Robux
-    [25] = 1234567891,   -- 25 Robux
-    [50] = 1234567892,   -- 50 Robux
-    [100] = 1234567893,  -- 100 Robux
+    [10] = 1234567890,   -- Reemplaza con el ID de tu producto de 10 Robux
+    [25] = 1234567891,   -- Reemplaza con el ID de tu producto de 25 Robux
+    [50] = 1234567892,   -- Reemplaza con el ID de tu producto de 50 Robux
+    [100] = 1234567893,  -- Reemplaza con el ID de tu producto de 100 Robux
+    [250] = 1234567894,  -- Reemplaza con el ID de tu producto de 250 Robux
+    [500] = 1234567895,  -- Reemplaza con el ID de tu producto de 500 Robux
 }
 ```
 
-## 📊 Cómo Funcionan los Pagos
+## 🎯 Cómo Funciona
 
-1. **Usuario publica música**: Establece precio (ej: 25 Robux)
-2. **Admin aprueba**: Asigna el productId correspondiente
-3. **Usuario escucha**: Se muestra prompt de pago
-4. **Compra completada**: 
-   - 30% se queda Roblox
-   - 70% del restante (49% del total) va al creador del juego
-   - El artista recibe reconocimiento (Roblox no permite transferencias directas)
+### Sistema Automático de Precios
 
-## 🎯 Músicas Gratuitas
+El sistema asigna automáticamente el Developer Product más cercano:
 
-Si el precio es 0, la música es **completamente gratis** y se reproduce sin restricciones.
+- Usuario pide **15 Robux** → Se asigna producto de **10 Robux**
+- Usuario pide **30 Robux** → Se asigna producto de **25 Robux**
+- Usuario pide **75 Robux** → Se asigna producto de **50 Robux** o **100 Robux** (el más cercano)
+- Usuario pide **0 Robux** → Música **GRATIS**
+
+### Flujo Completo
+
+1. **Usuario publica música**: Pone precio (ej: 35 Robux)
+2. **Sistema asigna producto**: Automáticamente asigna el de 25 o 50 Robux (el más cercano)
+3. **Admin aprueba**: La música queda activa con su precio
+4. **Usuario compra**: Paga el precio del producto asignado
+5. **Distribución automática**:
+   - 30% → Roblox (automático)
+   - 35% → Creador del juego (tú)
+   - 35% → Artista (reconocimiento)
+
+## 💰 Distribución de Ganancias
+
+Cuando alguien compra una música de **100 Robux**:
+
+```
+100 Robux pagados
+├─ 30 Robux → Roblox (comisión)
+└─ 70 Robux restantes
+   ├─ 35 Robux → Creador del juego
+   └─ 35 Robux → Artista (simbólico*)
+```
+
+**\*Nota**: Roblox no permite transferencias directas entre usuarios. El sistema registra las ventas del artista como estadística. Si quieres recompensar a los artistas, podrías:
+- Darles un rol especial
+- Darles acceso a contenido exclusivo
+- Implementar un sistema de "créditos" interno
 
 ## ✅ Ventajas de Este Sistema
 
-- ✅ No requiere Game Passes individuales
-- ✅ Los usuarios solo pagan una vez por música
-- ✅ Sistema de compras ya verificadas (evita pagos duplicados)
-- ✅ Compatible con el sistema de monetización de Roblox
-- ✅ Los admins pueden configurar precios personalizados
+- ✅ **Completamente automático** - No requiere configuración manual por música
+- ✅ **Flexible** - Los usuarios ponen el precio que quieran
+- ✅ **Eficiente** - Solo necesitas crear 6 productos una vez
+- ✅ **Escalable** - Funciona con infinitas músicas
+- ✅ **Compatible** - Usa el sistema oficial de Roblox
+
+## 📊 Ejemplo Real
+
+```
+🎵 Música: "Summer Vibes"
+👤 Artista: JuanMusic
+💵 Precio solicitado: 35 Robux
+💵 Precio asignado: 25 Robux (producto más cercano)
+📦 Product ID: 1234567891
+
+Cuando alguien compra:
+- Paga 25 Robux
+- Roblox: 7.5 Robux
+- Tú: 8.75 Robux
+- Artista: 8.75 Robux (reconocimiento)
+```
 
 ## 🔧 Troubleshooting
 
-### "Esta música requiere configuración del administrador"
-- El admin no ha asignado un `productId` a la música
-- Solución: Asignar manualmente el productId correcto
+### "Sistema de pagos no configurado"
+- Verifica que hayas creado los Developer Products
+- Asegúrate de haber puesto los IDs correctos en `MUSIC_PRODUCTS`
+- Al menos un producto debe tener un ID válido (no 0)
+
+### El precio no coincide exactamente
+- Esto es normal - el sistema asigna el producto más cercano
+- Los usuarios verán el precio real antes de comprar
 
 ### "Error al procesar pago"
-- El productId no existe o está mal configurado
-- Solución: Verificar que el Developer Product existe y está publicado
+- Verifica que los Product IDs sean correctos
+- Los productos deben estar **publicados** (no en borrador)
 
-### La música no se envía
-- Verificar que todos los campos estén completos
-- Revisar la consola de errores (F9 en Roblox)
+## 🎉 ¡Listo para Usar!
+
+Una vez configurados los 6 Developer Products, el sistema funciona completamente solo:
+
+1. Usuarios suben música con cualquier precio
+2. Sistema asigna producto automáticamente
+3. Pagos se procesan sin intervención
+4. Ganancias se distribuyen automáticamente

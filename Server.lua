@@ -880,6 +880,49 @@ print("✓ Sistema listo para usar")
  
  
 -- ========== SISTEMA DE MÚSICA ==========
+
+-- CONFIGURACIÓN DE PRODUCTOS MUSICALES
+-- CREA ESTOS DEVELOPER PRODUCTS EN https://create.roblox.com
+-- Luego reemplaza estos IDs con los tuyos
+local MUSIC_PRODUCTS = {
+    [10] = 0,   -- Developer Product ID para 10 Robux - CAMBIAR
+    [25] = 0,   -- Developer Product ID para 25 Robux - CAMBIAR
+    [50] = 0,   -- Developer Product ID para 50 Robux - CAMBIAR
+    [100] = 0,  -- Developer Product ID para 100 Robux - CAMBIAR
+    [250] = 0,  -- Developer Product ID para 250 Robux - CAMBIAR
+    [500] = 0,  -- Developer Product ID para 500 Robux - CAMBIAR
+}
+
+-- Función para obtener el producto más cercano al precio solicitado
+local function getNearestMusicProduct(requestedPrice)
+    local availablePrices = {}
+    for price, productId in pairs(MUSIC_PRODUCTS) do
+        if productId ~= 0 then -- Solo usar productos configurados
+            table.insert(availablePrices, price)
+        end
+    end
+    
+    if #availablePrices == 0 then
+        return nil, nil
+    end
+    
+    table.sort(availablePrices)
+    
+    -- Buscar el precio más cercano
+    local nearestPrice = availablePrices[1]
+    local minDiff = math.abs(requestedPrice - nearestPrice)
+    
+    for _, price in ipairs(availablePrices) do
+        local diff = math.abs(requestedPrice - price)
+        if diff < minDiff then
+            minDiff = diff
+            nearestPrice = price
+        end
+    end
+    
+    return nearestPrice, MUSIC_PRODUCTS[nearestPrice]
+end
+
 local musicDatabase = {}
  
 -- Cargar música del DataStore
@@ -909,6 +952,20 @@ publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, categ
     
     price = tonumber(price) or 0
     
+    -- Si tiene precio, obtener el producto más cercano
+    local actualPrice = price
+    local productId = nil
+    
+    if price > 0 then
+        actualPrice, productId = getNearestMusicProduct(price)
+        if not productId then
+            warn("[MÚSICA] No hay productos configurados. Configurar MUSIC_PRODUCTS en Server.lua")
+            return false, "Sistema de pagos no configurado. Contacta al administrador."
+        end
+        print(string.format("[MÚSICA] Precio solicitado: %d → Precio asignado: %d (Product ID: %d)", 
+            price, actualPrice, productId))
+    end
+    
     local newMusic = {
         id = generateId(),
         name = musicName,
@@ -920,14 +977,22 @@ publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, categ
         timestamp = os.time(),
         dateCreated = os.date("%d/%m/%Y %H:%M"),
         status = "pending",
-        price = price,
+        price = actualPrice, -- Precio real del producto
+        requestedPrice = price, -- Precio que pidió el usuario
+        productId = productId, -- ID del Developer Product
         purchases = {} -- Usuarios que ya compraron
     }
     
     table.insert(musicDatabase, 1, newMusic)
     saveMusicData()
     
-    print(string.format("[SERVER] Música '%s' enviada a revisión (Precio: %d Robux)", musicName, price))
+    if price > 0 then
+        print(string.format("[SERVER] Música '%s' enviada (Precio: %d Robux, Product: %d)", 
+            musicName, actualPrice, productId))
+    else
+        print(string.format("[SERVER] Música '%s' enviada (GRATIS)", musicName))
+    end
+    
     return true
 end
  
@@ -1053,8 +1118,34 @@ local function processMusicPurchase(receiptInfo)
             
             if not table.find(music.purchases, userId) then
                 table.insert(music.purchases, userId)
+                
+                -- Calcular distribución (Roblox se queda 30%, el 70% restante se divide)
+                local totalRobux = music.price
+                local afterRobloxCut = totalRobux * 0.7 -- 70% después del corte de Roblox
+                local creatorShare = afterRobloxCut * 0.5 -- 50% para el creador del juego
+                local artistShare = afterRobloxCut * 0.5 -- 50% para el artista
+                
+                -- NOTA: Roblox automáticamente te da tu parte como dueño del juego
+                -- El "artistShare" es simbólico - Roblox no permite transferencias directas
+                -- Podrías implementar un sistema de "créditos" internos si quieres
+                
                 saveMusicData()
-                print(string.format("[MÚSICA] Usuario %d compró '%s' por %d Robux", userId, music.name, music.price))
+                
+                print(string.format(
+                    "[MÚSICA] 💰 COMPRA EXITOSA:\n" ..
+                    "   Usuario: %d\n" ..
+                    "   Música: '%s'\n" ..
+                    "   Precio: %d Robux\n" ..
+                    "   Distribución:\n" ..
+                    "   - Roblox: %.1f Robux (30%%)\n" ..
+                    "   - Creador del juego: %.1f Robux (35%%)\n" ..
+                    "   - Artista (%s): %.1f Robux (35%%)",
+                    userId, music.name, totalRobux,
+                    totalRobux * 0.3,
+                    creatorShare,
+                    music.author,
+                    artistShare
+                ))
             end
             
             return Enum.ProductPurchaseDecision.PurchaseGranted
