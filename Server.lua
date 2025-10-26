@@ -129,11 +129,15 @@ task.spawn(function()
 end)
  
 -- CREAR REMOTES SI NO EXISTEN (automático)
+print("[SERVER] Creando sistema de RemoteEvents...")
 local remoteFolder = ReplicatedStorage:FindFirstChild("RoogleRemotes")
 if not remoteFolder then
     remoteFolder = Instance.new("Folder")
     remoteFolder.Name = "RoogleRemotes"
     remoteFolder.Parent = ReplicatedStorage
+    print("[SERVER] ✓ Carpeta RoogleRemotes creada")
+else
+    print("[SERVER] ✓ Carpeta RoogleRemotes encontrada")
 end
  
 local function createRemote(name, className)
@@ -142,6 +146,7 @@ local function createRemote(name, className)
         remote = Instance.new(className)
         remote.Name = name
         remote.Parent = remoteFolder
+        print(string.format("[SERVER] ✓ Remote creado: %s (%s)", name, className))
     end
     return remote
 end

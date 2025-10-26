@@ -1428,5 +1428,7 @@ termsContent.Parent = R.termsPanel
 task.wait(0.1)
 R.termsPanel.CanvasSize = UDim2.new(0, 0, 0, termsLayoutUI.AbsoluteContentSize.Y + 60)
 
+-- Señal de que este script terminó de cargar
+_G.RoogleCoreLoaded = true
 print("✓ Roogle Core (1/3) cargado: UI y variables listas.")
 

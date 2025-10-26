@@ -1,8 +1,9 @@
 -- Roogle_Functions.LocalScript (2 de 3)
 -- Este script define TODAS las funciones y lógica de la aplicación.
 
--- Esperar a que el script Core cargue las variables
-repeat task.wait() until _G.RoogleClient
+-- ESPERAR a que Core termine de cargar completamente
+repeat task.wait(0.1) until _G.RoogleCoreLoaded and _G.RoogleClient
+print("⏳ Core detectado, iniciando Functions...")
 local R = _G.RoogleClient
 
 -- ========== FUNCIONES ==========
@@ -1550,5 +1551,7 @@ R.searchAndDisplayUsers = function(query)
         R.adminScrollContainer.CanvasSize = UDim2.new(0, 0, 0, R.adminScrollContainer:FindFirstChildOfClass("UIListLayout").AbsoluteContentSize.Y + 30)
 end
 
+-- Señal de que Functions terminó de cargar
+_G.RoogleFunctionsLoaded = true
 print("✓ Roogle Functions (2/3) cargado: Lógica lista.")
 

@@ -1,9 +1,9 @@
 -- Roogle_Events.LocalScript (3 de 3)
 -- Este script conecta todos los eventos y ejecuta la carga inicial.
 
--- Esperar a que Core y Functions carguen
--- Esperamos por 'setInterfaceView' para saber que Functions.lua terminó
-repeat task.wait() until _G.RoogleClient and _G.RoogleClient.setInterfaceView
+-- ESPERAR a que Core Y Functions terminen completamente
+repeat task.wait(0.1) until _G.RoogleCoreLoaded and _G.RoogleFunctionsLoaded and _G.RoogleClient and _G.RoogleClient.setInterfaceView
+print("⏳ Core y Functions detectados, iniciando Events...")
 local R = _G.RoogleClient
 
 -- ========== EVENTOS ==========
