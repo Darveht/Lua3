@@ -176,7 +176,34 @@ local getPendingMusicEvent = createRemote("GetPendingMusic", "RemoteFunction")
 local toggleMusicStatusEvent = createRemote("ToggleMusicStatus", "RemoteFunction")
 local getVerifiedUsersEvent = createRemote("GetVerifiedUsers", "RemoteFunction")
 local purchaseMusicEvent = createRemote("PurchaseMusic", "RemoteFunction")
+local sendSupportRequestEvent = createRemote("SendSupportRequest", "RemoteFunction")
+local getSupportRequestsEvent = createRemote("GetSupportRequests", "RemoteFunction")
+local sendSupportResponseEvent = createRemote("SendSupportResponse", "RemoteFunction")
+local checkSupportResponseEvent = createRemote("CheckSupportResponse", "RemoteFunction")
  
+-- BASE DE DATOS DE SOPORTE
+local supportRequests = {} -- {id, username, userId, message, timestamp, status, response}
+local supportDataStore = DataStoreService:GetDataStore("RoogleSupportV1")
+
+-- Cargar datos de soporte
+local function loadSupportData()
+    local success, supportData = pcall(function()
+        return supportDataStore:GetAsync("requests")
+    end)
+    
+    if success and supportData then
+        supportRequests = supportData
+        print("[DATASTORE] Cargadas", #supportRequests, "solicitudes de soporte")
+    end
+end
+
+-- Guardar datos de soporte
+local function saveSupportData()
+    pcall(function()
+        supportDataStore:SetAsync("requests", supportRequests)
+    end)
+end
+
 -- FUNCIONES DEL SERVIDOR
  
 -- Función para detectar spam/enlaces en texto
@@ -885,12 +912,12 @@ print("✓ Sistema listo para usar")
 -- CREA ESTOS DEVELOPER PRODUCTS EN https://create.roblox.com
 -- Luego reemplaza estos IDs con los tuyos
 local MUSIC_PRODUCTS = {
-    [10] = 3441308871,   -- Music Price 0 - 10 Robux
-    [25] = 3441309296,   -- Music Price 1 - 25 Robux
-    [50] = 3441309591,   -- Music Price 2 - 50 Robux
-    [100] = 3441309922,  -- Music Price 3 - 100 Robux
-    [250] = 3441310287,  -- Music Price 4 - 250 Robux
-    [500] = 3441310533,  -- Music Price 5 - 500 Robux
+[10] = 3441308871,   -- Music Price 0 - 10 Robux
+[25] = 3441309296,   -- Music Price 1 - 25 Robux
+[50] = 3441309591,   -- Music Price 2 - 50 Robux
+[100] = 3441309922,  -- Music Price 3 - 100 Robux
+[250] = 3441310287,  -- Music Price 4 - 250 Robux
+[500] = 3441310533,  -- Music Price 5 - 500 Robux
 }
 
 -- Función para obtener el producto más cercano al precio solicitado
@@ -963,24 +990,24 @@ publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, categ
             return false, "Sistema de pagos no configurado. Contacta al administrador."
         end
         print(string.format("[MÚSICA] Precio solicitado: %d → Precio asignado: %d (Product ID: %d)", 
-            price, actualPrice, productId))
+        price, actualPrice, productId))
     end
     
     local newMusic = {
-        id = generateId(),
-        name = musicName,
-        audioId = musicId,
-        category = category,
-        author = player.Name,
-        authorId = player.UserId,
-        authorThumbnail = getPlayerThumbnail(player.UserId),
-        timestamp = os.time(),
-        dateCreated = os.date("%d/%m/%Y %H:%M"),
-        status = "pending",
-        price = actualPrice, -- Precio real del producto
-        requestedPrice = price, -- Precio que pidió el usuario
-        productId = productId, -- ID del Developer Product
-        purchases = {} -- Usuarios que ya compraron
+    id = generateId(),
+    name = musicName,
+    audioId = musicId,
+    category = category,
+    author = player.Name,
+    authorId = player.UserId,
+    authorThumbnail = getPlayerThumbnail(player.UserId),
+    timestamp = os.time(),
+    dateCreated = os.date("%d/%m/%Y %H:%M"),
+    status = "pending",
+    price = actualPrice, -- Precio real del producto
+    requestedPrice = price, -- Precio que pidió el usuario
+    productId = productId, -- ID del Developer Product
+    purchases = {} -- Usuarios que ya compraron
     }
     
     table.insert(musicDatabase, 1, newMusic)
@@ -988,7 +1015,7 @@ publishMusicFunction.OnServerInvoke = function(player, musicName, musicId, categ
     
     if price > 0 then
         print(string.format("[SERVER] Música '%s' enviada (Precio: %d Robux, Product: %d)", 
-            musicName, actualPrice, productId))
+        musicName, actualPrice, productId))
     else
         print(string.format("[SERVER] Música '%s' enviada (GRATIS)", musicName))
     end
@@ -1132,19 +1159,19 @@ local function processMusicPurchase(receiptInfo)
                 saveMusicData()
                 
                 print(string.format(
-                    "[MÚSICA] 💰 COMPRA EXITOSA:\n" ..
-                    "   Usuario: %d\n" ..
-                    "   Música: '%s'\n" ..
-                    "   Precio: %d Robux\n" ..
-                    "   Distribución:\n" ..
-                    "   - Roblox: %.1f Robux (30%%)\n" ..
-                    "   - Creador del juego: %.1f Robux (35%%)\n" ..
-                    "   - Artista (%s): %.1f Robux (35%%)",
-                    userId, music.name, totalRobux,
-                    totalRobux * 0.3,
-                    creatorShare,
-                    music.author,
-                    artistShare
+                "[MÚSICA] 💰 COMPRA EXITOSA:\n" ..
+                "   Usuario: %d\n" ..
+                "   Música: '%s'\n" ..
+                "   Precio: %d Robux\n" ..
+                "   Distribución:\n" ..
+                "   - Roblox: %.1f Robux (30%%)\n" ..
+                "   - Creador del juego: %.1f Robux (35%%)\n" ..
+                "   - Artista (%s): %.1f Robux (35%%)",
+                userId, music.name, totalRobux,
+                totalRobux * 0.3,
+                creatorShare,
+                music.author,
+                artistShare
                 ))
             end
             
@@ -1170,7 +1197,110 @@ end
 
 -- Cargar música al inicio
 loadMusicData()
- 
+
+-- FUNCIONES DE SOPORTE
+sendSupportRequestEvent.OnServerInvoke = function(player, message)
+    -- Validación de entrada
+    if not message or message == "" or message == " " then
+        warn(string.format("[SOPORTE] Mensaje vacío de %s", player.Name))
+        return false, "El mensaje no puede estar vacío"
+    end
+    
+    -- Limpiar mensaje
+    message = string.gsub(message, "^%s*(.-)%s*$", "%1")
+    
+    if #message < 10 then
+        warn(string.format("[SOPORTE] Mensaje muy corto de %s", player.Name))
+        return false, "El mensaje debe tener al menos 10 caracteres"
+    end
+    
+    local newRequest = {
+    id = generateId(),
+    username = player.Name,
+    userId = player.UserId,
+    message = message,
+    timestamp = os.time(),
+    dateCreated = os.date("%d/%m/%Y %H:%M"),
+    status = "pending", -- pending, answered
+    response = nil,
+    responseDate = nil,
+    respondedBy = nil
+    }
+    
+    table.insert(supportRequests, 1, newRequest)
+    
+    -- Guardar inmediatamente
+    local saveSuccess = pcall(function()
+        saveSupportData()
+    end)
+    
+    if not saveSuccess then
+        warn("[SOPORTE] Error al guardar datos")
+        return false, "Error al guardar solicitud"
+    end
+    
+    print(string.format("[SOPORTE] ✓ Nueva solicitud #%d de %s: '%s'", 
+    #supportRequests, 
+    player.Name, 
+    string.sub(message, 1, 50) .. (string.len(message) > 50 and "..." or "")
+    ))
+    
+    return true, "success"
+end
+
+getSupportRequestsEvent.OnServerInvoke = function(player)
+    if not isAdmin(player.Name) then
+        return {}
+    end
+    
+    return supportRequests
+end
+
+sendSupportResponseEvent.OnServerInvoke = function(player, requestId, response)
+    if not isAdmin(player.Name) then
+        return false, "No tienes permisos"
+    end
+    
+    if not response or response == "" then
+        return false, "La respuesta no puede estar vacía"
+    end
+    
+    for _, request in ipairs(supportRequests) do
+        if request.id == requestId then
+            request.response = response
+            request.status = "answered"
+            request.respondedBy = player.Name
+            request.responseDate = os.date("%d/%m/%Y %H:%M")
+            saveSupportData()
+            
+            print(string.format("[SOPORTE] Admin %s respondió a %s", player.Name, request.username))
+            return true, "Respuesta enviada correctamente"
+        end
+    end
+    
+    return false, "Solicitud no encontrada"
+end
+
+checkSupportResponseEvent.OnServerInvoke = function(player)
+    local userRequests = {}
+    
+    for _, request in ipairs(supportRequests) do
+        if request.userId == player.UserId and request.status == "answered" then
+            table.insert(userRequests, request)
+        end
+    end
+    
+    return userRequests
+end
+
+-- Cargar datos de soporte al inicio
+loadSupportData()
+
+print("=== SISTEMA DE MÚSICA Y SOPORTE ===")
 print("✓ Sistema de música iniciado")
 print("✓ Músicas totales:", #musicDatabase)
+print("✓ Sistema de soporte iniciado")
+print("✓ Solicitudes de soporte:", #supportRequests)
+print("===================================")
  
+
