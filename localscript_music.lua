@@ -333,35 +333,35 @@ musicCloseButton.MouseButton1Click:Connect(function()
 end)
 
 R.submitMusicButton.MouseButton1Click:Connect(function()
-        local musicName = musicNameInput.Text
-        local musicId = musicIdInput.Text
-        local category = R.musicCategoryInput.Text
-        local price = tonumber(R.musicPriceInput.Text) or 0
-
-        if musicName == "" or musicId == "" or category == "" then
-                warn("⚠ Por favor completa todos los campos obligatorios")
-                return
-        end
-
-        R.loadingPanel.Visible = true
-        R.loadingLabel.Text = "Enviando música..."
-
-        local success, result = pcall(function()
-                return publishMusicFunction:InvokeServer(musicName, musicId, category, price)
-        end)
-
-        R.loadingPanel.Visible = false
-
-        if success and result then
-                musicNameInput.Text = ""
-                musicIdInput.Text = ""
-                R.musicCategoryInput.Text = ""
-                R.musicPriceInput.Text = "0"
-                musicPanel.Visible = false
-                print("✓ Música enviada a revisión")
-        else
-                warn("✗ Error al enviar música:", result)
-        end
+    local musicName = musicNameInput.Text
+    local musicId = musicIdInput.Text
+    local category = R.musicCategoryInput.Text
+    local price = tonumber(R.musicPriceInput.Text) or 0
+    
+    if musicName == "" or musicId == "" or category == "" then
+        warn("⚠ Por favor completa todos los campos obligatorios")
+        return
+    end
+    
+    R.loadingPanel.Visible = true
+    R.loadingLabel.Text = "Enviando música..."
+    
+    local success, result = pcall(function()
+        return publishMusicFunction:InvokeServer(musicName, musicId, category, price)
+    end)
+    
+    R.loadingPanel.Visible = false
+    
+    if success and result then
+        musicNameInput.Text = ""
+        musicIdInput.Text = ""
+        R.musicCategoryInput.Text = ""
+        R.musicPriceInput.Text = "0"
+        musicPanel.Visible = false
+        print("✓ Música enviada a revisión")
+    else
+        warn("✗ Error al enviar música:", result)
+    end
 end)
 
 task.wait(0.1)
